@@ -1,0 +1,249 @@
+/*
+Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+Click nbfs://nbhost/SystemFileSystem/Templates/ClientSide/css.css to edit this template
+*/
+/* 
+    Created on : 2 de jun de 2022, 15:25:44
+    Author     : caxos
+*/
+
+/*@TODO
+1. Verificar necessidade/possibilidade de colocar a modal mais pra cima, perto de onde fica o botão (por enquanto), ao trocar a margin:auto para margin-bottom: auto, margin-left:auto e margin-right:auto
+*/
+.aud-aid {
+    background-color: red;
+}
+
+.aud-aid-modal {
+    background-color: white;
+    z-index: 99;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 15px;
+    bottom: 0;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: auto;
+    width: 350px;
+    /* Need a specific value to work */
+    height: 400px;
+    border: 2px solid black;
+    border-radius: 16px;
+    transition: opacity 0.5s ease;
+}
+
+.aud-aid-icon {
+    z-index: 98;
+    background-color: transparent;
+    height: 24px;
+    width: 24px;
+    /*position: relative;
+    right: -10px;*/
+    position: absolute;
+    top: 10px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: auto;
+    cursor: pointer;
+    color: white;
+
+}
+
+.aud-aid-modal-header {
+    width: 100%;
+    /*position: absolute;*/
+    top: 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
+    margin-top: 5px;
+}
+
+.aud-aid-modal-header h4 {
+    margin: 0;
+}
+
+.aud-aid-modal-content {
+    width: 100%;
+    /*position: absolute;*/
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    /*padding: 0 5px;*/
+    flex-wrap: wrap-reverse;
+}
+
+.aud-aid-modal-content span,
+input,
+select,
+p,
+br {
+    margin-bottom: 5px;
+}
+
+/*
+.aud-aid-modal-content input:not([type="date"]), input:not([type="time"]), input:not([type="checkbox"]){
+    width: 155px;
+}
+*/
+
+.aud-aid-modal-content input[type="checkbox"] {
+    /*    position: absolute;
+        right: 25px;*/
+    margin-right: 15px
+}
+
+/*
+.aud-aid-modal-content input[type="date"], input[type="time"] {
+    width: 125px;
+    background-color: red;
+}
+*/
+
+#aud-aid-suggested-container {
+    text-align: center;
+    margin-top: 5px;
+}
+
+.aud-aid-modal-footer {
+    width: 100%;
+    position: absolute;
+    bottom: 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: flex-end;
+    margin-bottom: 5px;
+}
+
+.aud-aid-modal-footer button {
+    /*    color: red;*/
+    cursor: pointer;
+}
+
+.aud-aid-error {
+    border: 2px solid #E8571E;
+    border-radius: 5px;
+    /*background-color: #E8571E;*/
+}
+
+.aud-aid-success {
+    border: 2px solid #99CC99;
+    border-radius: 5px;
+    /*background-color: #99CC99;*/
+}
+
+.aud-aid-check-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.aud-aid-question {
+    margin-left: 15px;
+}
+
+.aud-aid-gigs-select-container {
+    position: absolute;
+    bottom: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 90%;
+}
+
+#aud-aid-gigs-text-and-select-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    width: 100%;
+}
+
+.aud-aid-date-time-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+.aud-aid-color-standard {
+    color: black;
+}
+
+.aud-aid-color-inicial {
+    color: #2f8000;
+}
+
+.aud-aid-color-instrucao {
+    color: #ff005d;
+}
+
+.aud-aid-color-inquiricao {
+    color: #ffa500;
+}
+
+.aud-aid-color-una {
+    color: #172be8;
+}
+
+.aud-aid-modal-overlay {
+    position: absolute;
+    background-color: rgba(100, 100, 100, 0.7);
+    height: 100%;
+    width: 100%;
+    z-index: 90;
+}
+
+.aud-aid-modal-shrinked {
+    transition: opacity 0.5s linear;
+    opacity: 0;
+}
+
+.aud-aid-color-100-digital {
+    color: #008000;
+}
+
+/*
+inicial #2f8000
+instrução #ff005d
+inquirição #ffa500
+una #172be8
+100% digital #008000
+*/
+/*------------------------------------------------------------------------------------------------------*/
+#aud-aid-options-header {
+    text-align: center;
+    /* background-color: rgba(150,150,150,0.7); */
+}
+
+#aud-aid-options-content {
+    /* background-color: rgba(150,150,150,0.7); */
+    width: 100%;
+    /*position: absolute;*/
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 5px 0;
+}
+
+#aud-aid-options-footer {
+    width: 100%;
+    position: absolute;
+    z-index: 2;
+    /* background-color: rgba(150,150,150,0.7); */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 5px 0;
+}
