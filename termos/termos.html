@@ -1,0 +1,140 @@
+
+    <!DOCTYPE html>
+    <html>
+
+    <head>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="./termos.css" />
+        <title>AudAid - Termos e Condições</title>
+    </head>
+
+    <body style="background-color: lightgray;">
+        <div id="aud-aid-terms-header" class="aud-aid-terms-header">
+            <h1>AudAid - Termos e Condições de Uso, Política de Privacidade</h1>
+        </div>
+        <div id="aud-aid-terms-content" class="aud-aid-terms-content">
+            <p>Seja bem vindo ao AudAid, uma extensão do Firefox voltada para auxiliar e agilizar o processo de designação
+            de audiências no Sistema PJeKz.</p>
+            <p>O objetivo principal da extensão é evitar a troca de abas e/ou janelas (sair da tela de Detalhes do Processo, abrir a tela da Pauta, etc) e também evitar erro humano no momento de selecionar entre os 27 tipos de audiência existentes.</p>
+            <h3>Funcionamento</h3>
+            <p>A extensão fica ativa somente nas páginas do PJe (exemplo: https://www.pje.trt9.jus.br), mais
+            especificamente na tela Dados do Processo.</p>
+            <p>Nesta tela, é a extensão adiciona um ícone/botão na parte superior central da tela.</p>
+            <p>Quando clicado, é exibida uma tela em que o usuário deve preencher os dados da audiência que quer
+            designar para o processo aberto, tais como:</p>
+            <ul>
+                <li>Sala de audiência</li>
+                <li>Data e hora</li>
+                <li>Tipo de audiência</li>
+            </ul>
+            <p>Dependendo do tipo de audiência escolhida, mais opções podem aparecer na tela, como por exemplo:</p>
+            <ul>
+                <li>A audiência é por videoconferência?</li>
+                <li>A audiência é faz parte da Semana Nacional da Conciliação?</li>
+                <li>A audiência é faz parte da Semana Nacional da Execução?</li>
+            </ul>
+            <p>Na parte central dessa janela será exibido o tipo de audiência que será designada, resultado da combinação
+            das opções escolhidas.</p>
+            <p>Ainda é possível escolher se a extensão deve criar uma tarefa no GIGS após designar a audiência. É possível
+            esculher uma tarefa pré cadastrada (na tela de Opções), ou até mesmo digitar uma nova observação para a
+            tarefa. Neste último caso, o prazo escolhido será automaticamente de 02 dias úteis.</p>
+            <p>Por fim, são exibidos três botões:</p>
+            <ul>
+                <li>Fechar a janela</li>
+                <li>Abrir a tela da pauta (sem designar a audiência)</li>
+                <li>Designar a audiência resultante das opções escolhidas.</li>
+            </ul>
+            <p>Clicar em qualquer parte fora da janela também a fecha, tal como o botão Fechar.</p>
+            <p>Para que as alterações (designação da audiência e, caso necessário, criação de tarefa no GIGS) apareçam
+            visíveis para o usuário, é necessário atualizar a página.</p>
+            <p>Após terminar o(s) processo(s), a extensão mostra uma janela perguntando se o usuário quer fazer isso na
+            sequência. Caso clique no botão OK, a página será recarregada. Caso deseje não atualizar (por exemplo para
+            fazer alguma anotação, ler alguma informação), basta clicar em Cancelar. Mas as alterações só ficarão
+            visíveis após atualizar manualmente depois.</p>
+
+            <h3>Trânsito de Dados</h3>
+            <p>Ao abrir a janela Dados do Processo, a extensão busca as seguintes informações e as exibe na janela:</p>
+            <ul>
+                <li>Número do processo</li>
+                <li>Fase do processo</li>
+                <li>Rito do processo</li>
+                <li>Salas de audiência da vara</li>
+            </ul>
+            <p>Ao clicar no botão Designar, são enviadas as seguintes informações:</p>
+            <ul>
+                <li>Número do processo</li>
+                <li>Fase do processo</li>
+                <li>Rito do processo</li>
+                <li>Salas de audiência da vara do perfil que o usuário está logado</li>
+                <li>Data</li>
+                <li>Hora</li>
+                <li>Tipo de audiência</li>
+                <li>GIGS para marcar (opcional)</li>
+                <li>Token X-SRF</li>
+                <ul>
+                    <li>Os Tokens X-SRF são sequências de valores imprevisíveis, secretos e únicos que são gerados pelo
+                        servidor e transmitidos ao cliente (navegador de internet, p.ex.: Mozilla Firefox) de uma forma
+                        que seja incluída em todas as requisições HTTP feitas pleo cliente, enquanto durar a sessão.
+                    </li>
+                    <li>Os Tokens X-SRF não são gerados enquanto o usuário não passa pela autenticação, mediante
+                        inserção de usuário e senha ou de senha do e-Token.</li>
+                    <li>Os Tokens X-SRF são gerados pelo servidor, enviados para o navegador de internet no momento em
+                        que o usuário faz login e ficam armazenados em um arquivo interno (cookie).</li>
+                    <li>Os Tokens X-SRF permanecem inalterados enquanto o usuário mantiver a sessão ativa (por exemplo:
+                        não fechar o navegador; permanecer por muito tempo sem atividade).</li>
+                    <li>Após o fim de cada sessão, é necessário que o usuário passe novamente pela autenticação, e outro
+                        Token X-SRF será gerado.</li>
+                    <li>Após o usuário ter passado pela autenticação e um Token X-SRF ter sido criado, este é reenviado
+                        ao servidor para cada requisição HTTP (cada mudança de página do navegador), e funciona como
+                        nova etapa de autenticação, para verificar que o usuário continua logado, sem a necessidade de
+                        inserção de usuário e senha em cada link ou botão clicado.</li>
+                    <li>Os Tokens X-SRF não são gerados pela vontade do usuário.</li>
+                    <li>Os Tokens X-SRF são gerados aleatoriamente, pelo servidor.</li>
+                    <li>Os Tokens X-SRF podem ser acessados pelo usuário, mas este não tem como editá-los, por medidas
+                        de segurança.</li>
+                    <li>Os Tokens X-SRF servem para impedir que usuários não logados façam requisições, ou seja, acessem
+                        páginas destinadas apenas àqueles usuários logados.</li>
+                    <li>É grande a literatura sobre Tokens X-SRF (também chamados de CSRF Tokens). Para saber mais,
+                        basta pesquisar na internet, como por exemplo, na <a href="https://en.wikipedia.org/wiki/Cross-site_request_forgery" target="_blank">Wikipedia</a></li>
+
+                </ul>
+            </ul>
+            <div style="flex-direction: row;">
+                <p>Ou seja, <span style="color:red;"><b>NÃO</b></span> há trânsito, em momento algum, das informações
+                abaixo:</p>
+            </div>
+            <!-- <ul style="background-color:#ea9999"> -->
+            <ul style="color:red">
+                <li>Informações pessoais (Nome, CPF, matrícula, etc.) do usuário logado</li>
+                <li>Informações funcionáis (usuário e senha do PJe, senha do e-Token físico) do usuário logado</li>
+                <li>Informações pessoais (Nome, CPF, matrícula, etc.) das partes</li>
+                <li>Informações pessoais (Nome, CPF, matrícula, etc.) dos advogados</li>
+                <li>Informações pessoais (Nome, CPF, matrícula, etc.) de peritos</li>
+                <li>Informações pessoais (Nome, CPF, matrícula, etc.) de testemunhas</li>
+                <li>Informações financeiras (valor atribuído à causa, valor da liquidação, valor da execução, etc)</li>
+                <li>Informações sobre convênios (SISBAJUD, RENAJUD, DETRAN, etc)</li>
+            </ul>
+            <p>Para usar a extensão, é necessário concordar com os termos acima, clicando na caixa abaixo e, após, clicando
+            no botão Concordar.</p>
+            <p></p>Ao fazer isso, você está afirmando que leu, entendeu, está ciente e concorda com os termos acima, não
+            podendo responsabilizar o autor da extensão por qualquer informação supostamente vazada pela extensão.</p>
+        </div>
+        <div id="aud-aid-terms-footer" class="aud-aid-terms-footer">
+            <form>
+                <div>
+                    <input type="checkbox" id='aud-aid-terms-agreement-checkbox' required />
+                    <label>Declaro que li e concordo com os termos acima</label>
+                </div>
+                <div>
+                    <button type="submit" id='aud-aid-terms-agreement-button' disabled title="Clique na caixa acima para habilitar o botão">Concordar</button>
+                </div>
+                <div>
+                    <button type="submit" id='aud-aid-terms-disagreement-button' title="Clique na caixa acima para habilitar o botão">DisConcordar</button>
+                </div>
+            </form>
+        </div>
+        <script type="text/javascript" src="./../jquery/jquery.js"></script>
+        <script type="text/javascript" src="termos.js"></script>
+    </body>
+
+    </html>

@@ -220,30 +220,3 @@ una #172be8
 100% digital #008000
 */
 /*------------------------------------------------------------------------------------------------------*/
-#aud-aid-options-header {
-    text-align: center;
-    /* background-color: rgba(150,150,150,0.7); */
-}
-
-#aud-aid-options-content {
-    /* background-color: rgba(150,150,150,0.7); */
-    width: 100%;
-    /*position: absolute;*/
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    margin: 5px 0;
-}
-
-#aud-aid-options-footer {
-    width: 100%;
-    position: absolute;
-    z-index: 2;
-    /* background-color: rgba(150,150,150,0.7); */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    margin: 5px 0;
-}

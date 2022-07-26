@@ -1,3 +1,0 @@
-function audaidalert() {
-    alert("teste");
-}

@@ -7,7 +7,7 @@
     "browser_specific_settings": {
         "gecko": {
             "id": "{1cdadb01-6336-4ca3-87e6-4f44ba1b1c1d}",
-            "update_url": "https://owncloud.trt9.jus.br/index.php/s/FnbXdLe4LSqfq4u"
+            "update_url": "https://github.com/caXos/audaid"
         }
     },
     "icons": {
@@ -24,9 +24,10 @@
             ],
             "js": [
                 "audaid.js",
-                "jquery.js",
-                "options.js",
-                "optionsPopup.js"
+                "jquery/jquery.js",
+                "options/options.js",
+                "optionsPopup/optionsPopup.js",
+                "termos/termos.js"
             ],
             "css": [
                 "audaid.css"
@@ -36,7 +37,7 @@
     ],
     "background": {
         "scripts": [
-          "audaidbackground.js"
+          "background/background.js"
         ]
       },
     "options_ui": {
@@ -60,7 +61,7 @@
             "64": "icons/audaid.svg"
         },
         "default_title": "AudAid",
-        "default_popup": "optionsPopup.html",
+        "default_popup": "optionsPopup/optionsPopup.html",
         "browser_style": true
     }
 }

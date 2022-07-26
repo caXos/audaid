@@ -342,6 +342,22 @@ function validateBookHearing() {
 
     if (errorCounter === 0) {
         // console.log("AudAid - Audiência validada! Vou preparar o JSON.", new Date());
+        // preparePayload();
+        checkAlreadyBookedHearing();
+    }
+}
+
+async function checkAlreadyBookedHearing() {
+    // var unbookHearingButton = $('pje-link-cancelamento-pauta-audiencia');
+    // if (unbookHearingButton.length === 0) preparePayload();
+    // else {
+    //     if(confirm('Já existe uma audiência marcada para esse processo.\nPara prosseguir, é necessário desmarcar essa audiência.\nClique em OK para desmarcar e prosseguir, ou em Cancelar para cancelar para fazer manualmente?') === true) alert('Desmarcar');//desmarcar
+    // }
+    var idAlreadyBookedHearing = await getAlreadyBookedHearingId();
+
+    if (idAlreadyBookedHearing != null) {
+        if(confirm('Já existe uma audiência marcada para esse processo.\nPara prosseguir, é necessário desmarcar essa audiência.\nClique em OK para desmarcar e prosseguir, ou em Cancelar para cancelar para fazer manualmente?') === true) alert('Desmarcar');//desmarcar
+    } else {
         preparePayload();
     }
 }
@@ -501,6 +517,8 @@ function preparePayload() {
             if (window.confirm("Audiência designada com sucesso!\nPara que a audiência fique visível, é necessário recarregar a página.\nDeseja fazer isso agora?")) {
                 location.reload();
             }
+        } else {
+            if (responseJson.codigoErro === "PJE-063") alert(responseJson.mensagem);
         }
     }
 
@@ -605,4 +623,35 @@ function criaGigs() {
         console.log(novoxhr);
     } else alert('Não é pra criar GIGS!');
 
+}
+
+function getAlreadyBookedHearingId() {
+    var urlParaAbrir = "https://pje-homologacao.trt9.jus.br/pje-comum-api/api/processos/id/"+parseInt(idProcesso)+"/audiencias?status=M"
+    let novoxhr = new XMLHttpRequest();
+    novoxhr.open('GET', urlParaAbrir);
+    novoxhr.setRequestHeader('Accept', 'application/json, text/plain, */*');
+    novoxhr.setRequestHeader('Accept-Encoding', 'gzip, deflate, br');
+    novoxhr.setRequestHeader('Accept-Language', 'pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3');
+    novoxhr.setRequestHeader('Connection', 'keep-alive');
+    novoxhr.setRequestHeader('Cookie', document.cookie);
+    novoxhr.setRequestHeader('Host', urlHost);
+    novoxhr.setRequestHeader('Referer', urlReferer);
+    novoxhr.setRequestHeader('TE', 'Trailers');
+    novoxhr.setRequestHeader('User-Agent', window.navigator.userAgent);
+    novoxhr.setRequestHeader('X-XSRF-TOKEN', document.cookie.substr(document.cookie.search('Xsrf-Token='), 111).split('=')[1]);
+
+    novoxhr.onload = () => {
+        console.log(JSON.parse(novoxhr.responseText));
+        responseJson = JSON.parse(novoxhr.responseText);
+        if (responseJson.status != null) {
+            console.log(responseJson.id);
+            return responseJson.id;
+        } else {
+            return null;
+        }
+    }
+
+    novoxhr.send();
+
+    console.log(novoxhr);
 }
