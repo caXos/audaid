@@ -1,66 +1,176 @@
 var urlAtual = window.location.href.toString();
 var idProcesso = urlAtual.split("/")[5];
-var idTipo = "";
-var ritoParaMarcar = "";
-var idSalaFisica = "";
+var processo = null;
+var tiposDeAudiencia = null;
+var salas = null;
+var idSalaFisica = null;
+var debugLevel = null;
+var audAidAgreement = null;
 
-//1º Limpa tudo
-setTimeout(audAidClean, 2000);
+/*
+Funções de utilidade geral
+*/
+async function audAidStart() {
+    let getDebugLevel = browser.storage.local.get('audAidDebugLevel');
+    getDebugLevel.then(function (resposta) {
+        debugLevel = resposta.audAidDebugLevel;
+        if (debugLevel > 0) console.log("AudAid - Nível de Debug", debugLevel, new Date());
+    });
 
-function audAidClean() {
-    // console.log("AudAid - Carregado. Limpando...", new Date());
+    let getAgreement = browser.storage.local.get('audAidConcordo');
+    getAgreement.then(gotAgreement, didNotGetAgreement);
+}
 
-    //Fecha a modal, se estiver aberta (em caso de recarregar a página)
-    toggleModal(false);
+async function gotAgreement(termos) {
+    if (debugLevel >= 3) console.log('gotAGreement');
+    if (termos.audAidConcordo) {
+        if (debugLevel >= 3) console.log("AudAid - Carregado. Limpando...", new Date());
 
-    //Remove o botão para abrir a modal
-    $('#aud-aid-open-modal-button').remove();
-    // console.log("AudAid - Limpo!", new Date());
-    if ((urlAtual.includes('processo')) && (urlAtual.includes('detalhe'))) {
-        // console.log("Vou criar a modal.", new Date());
-        buildModal();
+        //Fecha a modal, se estiver aberta (em caso de recarregar a página)
+        toggleModal(false);
 
-        // console.log("AudAid - Modal criada! Criando botão...", new Date());
-        var buttonTemplate = $('<i />').addClass('fas fa-calendar-check aud-aid-icon').attr('id', 'aud-aid-open-modal-button').click(true, toggleModal);
-        $('body').append(buttonTemplate);
-        // console.log("AudAid - Botão criado e anexado à página! Pronto para uso!", new Date());
+        //Remove o botão para abrir a modal
+        $('#aud-aid-open-modal-button').remove();
+        $('#aud-aid-modal').remove();
+        $('#aud-aid-modal-overlay').remove();
+        $('#aud-aid-alert-container').remove();
+
+
+        if (debugLevel >= 3) console.log("AudAid - Limpo!", new Date());
+
+        if ((urlAtual.includes('processo')) && (urlAtual.includes('detalhe'))) {
+            if (debugLevel >= 3) console.log("AudAid - Vou criar a modal.", new Date());
+            processo = await getProcessData();
+            tiposDeAudiencia = await getHearingTypes();
+            salas = await getRoomIds();
+            await buildModal();
+
+            if (debugLevel >= 3) console.log("AudAid - Modal criada! Criando botão...", new Date());
+            var buttonTemplate = $('<i />').addClass('fas fa-calendar-check aud-aid-icon').attr('id', 'aud-aid-open-modal-button').click(true, toggleModal);
+            $('body').append(buttonTemplate);
+            if (debugLevel >= 3) console.log("AudAid - Botão criado e anexado à página! Pronto para uso!", new Date());
+        }
+    } else {
+        console.log('pegou o termo (fufilled promise), mas seu valor é falso');
     }
 }
 
-function buildModal() {
-    // console.log("AudAid - Criando modal...", new Date());
-    var numeroProcesso = $('.texto-numero-processo').text().substr(-26).trim();
-    var ondeCortar = $('.texto-numero-processo').text().length - 28;
-    var ritoProcesso = $('.texto-numero-processo').text().substr(1, ondeCortar);
-    ritoParaMarcar = ritoProcesso;
-    var faseProcesso = $('.info-processo > span:nth-child(2)').text().substr(5);
-    var juizo100Digital = $('.logo_juizo');
+async function didNotGetAgreement(error) {
+    console.log('did not get AGreement');
+}
 
-    if (juizo100Digital.length > 0) juizo100Digital = true;
-    else juizo100Digital = false;
+function getUrlToOpen(suffix) {
+    if (suffix === null || suffix === undefined) suffix = '';
+    var urlAtual = window.location.href.toString();
+    var urlParaAbrir = '';
+    if (urlAtual.includes("homologacao")) urlParaAbrir = 'https://pje-homologacao.trt9.jus.br/' + suffix;
+    else if (urlAtual.includes("treinamento")) urlParaAbrir = 'https://pje-treinamento.trt9.jus.br/' + suffix;
+    else urlParaAbrir = 'https://pje.trt9.jus.br/' + suffix;
+    return urlParaAbrir;
+}
+
+function openSchedule() {
+    var urlParaAbrir = getUrlToOpen('pjekz/pauta-audiencias');
+    const win = window.open(urlParaAbrir, '_blank');
+}
+
+function openAlert(titulo, mensagem) {
+    $('#aud-aid-alert-message').text(mensagem);
+    $('#aud-aid-alert-container').dialog({
+        title: titulo,
+        buttons: {
+            'Ok': function () {
+                $(this).dialog('close');
+            },
+        },
+    }).dialog('open');
+}
+
+function openReloadConfirm(titulo, mensagem) {
+    $('#aud-aid-alert-message').text(mensagem);
+    $('#aud-aid-alert-container').dialog({
+        title: titulo,
+        buttons: {
+            'Atualizar': function () {
+                location.reload();
+            },
+            'Não agora': function () {
+                $(this).dialog('close');
+            },
+        },
+    }).dialog('open');
+}
+
+function openRebookConfirm(titulo, mensagem, id) {
+    $('#aud-aid-alert-message').text(mensagem);
+    $('#aud-aid-alert-container').dialog({
+        title: titulo,
+        buttons: {
+            'Redesignar': function () {
+                $(this).dialog('close');
+                prepareCancelPayload(id);
+            },
+            'Não redesignar': function () {
+                $(this).dialog('close');
+            },
+        },
+    }).dialog('open');
+}
+//------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/*
+Funções de coleta de dados, preparação para montar a modal
+*/
+async function getHearingTypes() {
+    var urlParaAbrir = getUrlToOpen('pje-comum-api/api/dominio/tiposaudiencias');
+    let resposta = await fetch(urlParaAbrir);
+    let tipos = await resposta.json();
+    return tipos;
+}
+
+async function getProcessData() {
+    var urlParaAbrir = getUrlToOpen('pje-comum-api/api/processos/id/' + idProcesso);
+    let resposta = await fetch(urlParaAbrir);
+    let dados = await resposta.json();
+    return dados;
+}
+
+async function getRoomIds() {
+    var urlParaAbrir = getUrlToOpen("pje-comum-api/api/salasaudiencias?idOrgaoJulgador=" + processo.orgaoJulgador.id);
+    var resposta = await fetch(urlParaAbrir);
+    var salas = await resposta.json();
+    return salas;
+}
+//------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+/*
+Funções de execução do módulo
+*/
+//1º Limpa tudo
+setTimeout(audAidStart, 2000);
+
+async function buildModal() {
+    if (debugLevel >= 3) console.log("AudAid - Criando modal...", new Date());
 
     //Início da construção da modal
     var modalContainer = $('<div />').addClass('aud-aid-modal aud-aid-modal-shrinked').attr('id', 'aud-aid-modal').hide();
+    // var modalBackground = $('<img />').attr('src',browser.runtime.getURL('icons/audaid.svg')).addClass('aud-aid-modal-background');
+    // $(modalContainer).append(modalBackground);
 
     //Modal Header
     var modalHeader = $('<div />').addClass('aud-aid-modal-header').append($('<h4 />').text('AudAid'));
-    // console.log("AudAid - Modal Header Built!");
+    if (debugLevel >= 3) console.log("AudAid - Modal Header Built!");
 
     //Modal Content
     var modalContent = $('<div />').addClass('aud-aid-modal-content');
 
-    //Input que leva o número do processo aberto
-    var numberContainer = $('<div />');
-    //var numberInput = $('<input />').val(numeroProcesso).attr('title','Número do Processo').attr('disabled','disabled');
-    var number = $('<span />').attr('id', 'aud-aid-process-number').text('Número: ' + numeroProcesso);
-    var phase = $('<span />').attr('id', 'aud-aid-process-phase').text("Fase: " + faseProcesso);
-    $(numberContainer).append(number);
-    $(modalContent).append(numberContainer);
+    var number = $('<span />').attr('id', 'aud-aid-process-number').text('Número: ' + processo.numero);
+    var phase = $('<span />').attr('id', 'aud-aid-process-phase').text("Fase: " + processo.labelFaseProcessual);
+    $(modalContent).append(number);
     $(modalContent).append(phase);
 
-    if (juizo100Digital) {
-        var juizo100DigitalContainer = $('<span />').attr('id', 'aud-aid-process-100-digital').addClass('aud-aid-color-100-digital').text("100% Digital")
-        $(modalContent).append(juizo100DigitalContainer);
+    if (processo.juizoDigital) {
+        var juizoDigitalContainer = $('<span />').attr('id', 'aud-aid-process-100-digital').addClass('aud-aid-color-100-digital').text("100% Digital")
+        $(modalContent).append(juizoDigitalContainer);
     }
 
     //Select das salas de audiência
@@ -68,19 +178,22 @@ function buildModal() {
     var courtRoomSelect = $('<select />').attr('id', 'aud-aid-court-room-select').change(changedSuggestedCourtRoom);
     var stdOption = $('<option />').attr('value', 0).html('Selecione a sala').attr('disabled', 'disabled').attr('selected', 'selected');
     $(courtRoomSelect).append(stdOption);
-    for (i = 0; i < 2; i++) {
-        var roomOption = $('<option />').attr('value', i).html('Sala 0' + (i + 1));
+
+    var rooms = await getRoomIds();
+    for (i = 0; i < rooms.length; i++) {
+        var roomOption = $('<option />').attr('value', rooms[i].id).html(rooms[i].nome);
         $(courtRoomSelect).append(roomOption);
     }
+
     $(courtRoomSelectContainer).append(courtRoomSelect);
     $(modalContent).append(courtRoomSelectContainer);
 
-    // console.log("AudAid - Modal Content Court Room Select Built!");
+    if (debugLevel >= 3) console.log("AudAid - Modal Content Court Room Select Built!");
 
     //Inputs de data e hora
     var dateContainer = $('<div />').addClass('aud-aid-date-time-container');
-    var dateInput = $('<input />').attr('type', 'date').attr('id', 'aud-aid-date-input').click(changeSuggestedDate);
-    var hourInput = $('<input />').attr('type', 'time').attr('id', 'aud-aid-time-input').click(changeSuggestedTime);
+    var dateInput = $('<input />').attr('type', 'date').attr('id', 'aud-aid-date-input');
+    var hourInput = $('<input />').attr('type', 'time').attr('id', 'aud-aid-time-input');
 
     $(dateContainer).append($('<span />').text('Data:'));
     $(dateContainer).append(dateInput);
@@ -88,7 +201,7 @@ function buildModal() {
     $(dateContainer).append(hourInput);
     $(modalContent).append(dateContainer);
 
-    // console.log("AudAid - Modal Content Date and Time Inputs Built!");
+    if (debugLevel >= 3) console.log("AudAid - Modal Content Date and Time Inputs Built!");
 
     //Input do tipo de audiência
     var hearingTypeSelectContainer = $('<div />');
@@ -104,7 +217,7 @@ function buildModal() {
     $(hearingTypeSelectContainer).append($('<label />').attr('for', 'aud-aid-hearing-type-select').html('Tipo: ')).append(hearingTypeSelect);
     $(modalContent).append(hearingTypeSelectContainer);
 
-    // console.log("AudAid - Modal Content Type Select Built!");
+    if (debugLevel >= 3) console.log("AudAid - Modal Content Type Select Built!");
 
     //Checkboxes -> videoconferência? semana conciliação?
     var inputsContainer = $('<div />');
@@ -166,9 +279,8 @@ function buildModal() {
     //Modal Footer
     var modalFooter = $('<div />').addClass('aud-aid-modal-footer');
     var closeButton = $('<button />').text('Fechar').click(false, toggleModal);
-    // var openScheduleButton = $('<button />').text('Abrir Pauta').click(openSchedule);
-    var openScheduleButton = $('<button />').text('Abrir Pauta').click(criaGigs);//.click(openSchedule);
-    var scheduleButton = $('<button />').text('Designar').click(validateBookHearing);//.attr('disabled','disabled');
+    var openScheduleButton = $('<button />').text('Abrir Pauta').click(openSchedule);
+    var scheduleButton = $('<button />').text('Designar').click(validateBookHearing);
 
     $(modalFooter).append(closeButton);
     $(modalFooter).append(openScheduleButton);
@@ -183,13 +295,38 @@ function buildModal() {
     var modalOverlay = $('<div />').addClass('aud-aid-modal-overlay').attr('id', 'aud-aid-modal-overlay').click(false, toggleModal).hide();
     $("body").append(modalOverlay);
 
-    // if (juizo100Digital) $('#aud-aid-video-call-checkbox').attr('checked','checked').attr('disabled','disabled').trigger('change');
-    if (juizo100Digital) $('#aud-aid-video-call-checkbox').attr('checked', 'checked').trigger('change');
-    // console.log("AudAid - Modal construída e anexada à página!", new Date());
+    if (processo.juizoDigital) $('#aud-aid-video-call-checkbox').attr('checked', 'checked').trigger('change');
+    if (debugLevel >= 3) console.log("AudAid - Modal construída e anexada à página!", new Date());
+
+    //Alerta
+    var audAidAlertContainer = $('<div />').attr('id', 'aud-aid-alert-container').attr('title', 'Título padrão').hide();
+    var audAidAlertMessage = $('<p />').attr('id', 'aud-aid-alert-message');
+    $(audAidAlertContainer).append(audAidAlertMessage);
+    $("body").append(audAidAlertContainer);
+    if (debugLevel >= 3) console.log("AudAid - Alerta construído e anexado à página!", new Date());
+    $(audAidAlertContainer).dialog({
+        autoOpen: false,
+        show: {
+            effect: "fadeIn",
+            duration: 250
+        },
+        hide: 250,
+        resizable: false,
+        height: "auto",
+        width: 400,
+        modal: true,
+        // buttons: {
+        //     "Concordar": function () {
+        //         $(this).dialog("close");
+        //     },
+        //     Cancel: function () {
+        //         $(this).dialog("close");
+        //     }
+        // }
+    });
 }
 
 function toggleModal(state) {
-    //state.data ? $('#aud-aid-modal').show() : $('#aud-aid-modal').hide();
     if (state.data) {
         $('#aud-aid-modal').show();
         $('#aud-aid-modal').removeClass('aud-aid-modal-shrinked');
@@ -202,33 +339,15 @@ function toggleModal(state) {
 }
 
 function changedSuggestedCourtRoom(evt) {
-    var sala = evt.currentTarget.selectedIndex;
-    if (sala === 1) idSalaFisica = 85; //sala 01 1vdtcsc
-    if (sala === 2) idSalaFisica = 162; //sala 02 1vdtcsc
-    // if (sala === 1) idSalaFisica = 112; //sala 01 3vdtcsc
-    // if (sala === 2) idSalaFisica = 113; //sala 02 3vdtcsc
-}
-
-function changeSuggestedDate(evt) {
-    //var data = evt.currentTarget.value;
-    dataParaMarcar = $('#aud-aid-date-input').val();
-}
-
-function changeSuggestedTime(evt) {
-    //var data = evt.currentTarget.value;
-    horaParaMarcar = $('#aud-aid-time-input').val();
+    idSalaFisica = evt.currentTarget[evt.currentTarget.selectedIndex].value;
 }
 
 function changeSuggestedHearingType(evt) {
     var tipo = evt.currentTarget.selectedIndex;
-    showHiddenInputs(tipo);
-}
-
-function showHiddenInputs(valor) {
-    if (valor === 1) $('#aud-aid-special-weeks-form-container').show();
+    if (tipo === 1) $('#aud-aid-special-weeks-form-container').show();
     else $('#aud-aid-special-weeks-form-container').hide();
 
-    if (valor !== 5) $('#aud-aid-videocall-container').show();
+    if (tipo !== 5) $('#aud-aid-videocall-container').show();
     else $('#aud-aid-videocall-container').hide();
 }
 
@@ -238,46 +357,50 @@ function buildSuggestion() {
     var video = $('#aud-aid-video-call-checkbox')[0].checked;
     var agreementWeek = $('#aud-aid-agreement-week-radio')[0].checked;
     var executionWeek = $('#aud-aid-execution-week-radio')[0].checked;
-    var rite = ritoParaMarcar;
-    var phase = $('#aud-aid-process-phase').text().substr(7);
+    var phase = processo.labelFaseProcessual;
     var style = 'aud-aid-color-standard';
+    var needRite = false;
+    var rite = '';
 
     switch (parseInt(tipo)) {
         case 1:
             type = "Conciliação ";
-            rite = '';
+            needRite = false;
             if (phase === "Conhecimento") phase = "em Conhecimento ";
             else phase = "em Execução ";
             break;
         case 2:
             type = "Inicial ";
+            needRite = true;
             style = "aud-aid-color-inicial";
             phase = "";
             break;
         case 3:
             type = "Instrução ";
+            needRite = true;
             style = "aud-aid-color-instrucao";
             phase = "";
             break;
         case 4:
             type = "Encerramento ";
-            rite = '';
+            needRite = false;
             phase = "";
             break;
         case 5:
             type = "Julgamento ";
-            rite = '';
+            needRite = false;
             phase = "";
             break;
         case 6:
             type = "Una ";
+            needRite = true;
             style = 'aud-aid-color-una';
             phase = "";
             break;
         case 7:
             type = "Inquirição de testemunha ";
+            needRite = false;
             style = "aud-aid-color-inquiricao";
-            rite = '';
             phase = "";
             break;
         default:
@@ -286,8 +409,8 @@ function buildSuggestion() {
 
     if ((phase !== 'em Conhecimento ') && (phase !== 'em Execução ')) phase = '';
 
-    if (rite === "ATSum") rite = " (rito sumaríssimo)";
-    else rite = "";
+    if (needRite) if (processo.classeJudicial.sigla === 'ATSum') rite = ' (rito sumaríssimo)';
+    else rite = '';
 
     (video && parseInt(tipo) !== 5) ? video = ' por videoconferência' : video = '';
     agreementWeek ? agreementWeek = ' - Semana Nacional da Conciliação' : agreementWeek = '';
@@ -305,94 +428,72 @@ function buildSuggestion() {
 
 }
 
-function openSchedule() {
-    var urlParaAbrir = '';
-    if (urlAtual.includes("homologacao")) urlParaAbrir = 'https://pje-homologacao.trt9.jus.br/pjekz/pauta-audiencias';
-    else if (urlAtual.includes("treinamento")) urlParaAbrir = 'https://pje-treinamento.trt9.jus.br/pjekz/pauta-audiencias';
-    else urlParaAbrir = 'https://pje.trt9.jus.br/pjekz/pauta-audiencias';
-    const win = window.open(urlParaAbrir, '_blank');
-}
-
-function validateBookHearing() {
+async function validateBookHearing() {
     var errorCounter = 0;
     //CourtRoom
     if ($('#aud-aid-court-room-select').val() === null || $('#aud-aid-court-room-select').val() === undefined) {
         $('#aud-aid-court-room-select').addClass('aud-aid-error');
-        // console.log("AudAid - Erro! Sala de Audiências não preenchida corretamente.", new Date());
+        if (debugLevel >= 2) console.log("AudAid - Erro! Sala de Audiências não preenchida corretamente.", new Date());
         errorCounter++;
     } else $('#aud-aid-court-room-select').addClass('aud-aid-success');
     //Date
     if ($('#aud-aid-date-input').val() === null || $('#aud-aid-date-input').val() === undefined || $('#aud-aid-date-input').val() === '') {
         $('#aud-aid-date-input').addClass('aud-aid-error');
-        // console.log("AudAid - Erro! Data não preenchida corretamente.", new Date());
+        if (debugLevel >= 2) console.log("AudAid - Erro! Data não preenchida corretamente.", new Date());
         errorCounter++;
     } else $('#aud-aid-date-input').addClass('aud-aid-success');
     //Time
     if ($('#aud-aid-time-input').val() === null || $('#aud-aid-time-input').val() === undefined || $('#aud-aid-time-input').val() === '') {
         $('#aud-aid-time-input').addClass('aud-aid-error');
-        // console.log("AudAid - Erro! Hora não preenchida corretamente.", new Date());
+        if (debugLevel >= 2) console.log("AudAid - Erro! Hora não preenchida corretamente.", new Date());
         errorCounter++;
     } else $('#aud-aid-time-input').addClass('aud-aid-success');
     //Type
     if ($('#aud-aid-hearing-type-select').val() === null || $('#aud-aid-hearing-type-select').val() === undefined) {
         $('#aud-aid-hearing-type-select').addClass('aud-aid-error');
-        // console.log("AudAid - Erro! Tipo não preenchido corretamente.", new Date());
+        if (debugLevel >= 2) console.log("AudAid - Erro! Tipo não preenchido corretamente.", new Date());
         errorCounter++;
     } else $('#aud-aid-hearing-type-select').addClass('aud-aid-success');
 
     if (errorCounter === 0) {
-        // console.log("AudAid - Audiência validada! Vou preparar o JSON.", new Date());
-        // preparePayload();
+        if (debugLevel >= 2) console.log("AudAid - Audiência validada! Vou preparar o JSON.", new Date());
         checkAlreadyBookedHearing();
-    }
-}
-
-async function checkAlreadyBookedHearing() {
-    // var unbookHearingButton = $('pje-link-cancelamento-pauta-audiencia');
-    // if (unbookHearingButton.length === 0) preparePayload();
-    // else {
-    //     if(confirm('Já existe uma audiência marcada para esse processo.\nPara prosseguir, é necessário desmarcar essa audiência.\nClique em OK para desmarcar e prosseguir, ou em Cancelar para cancelar para fazer manualmente?') === true) alert('Desmarcar');//desmarcar
-    // }
-    var idAlreadyBookedHearing = await getAlreadyBookedHearingId();
-
-    if (idAlreadyBookedHearing != null) {
-        if(confirm('Já existe uma audiência marcada para esse processo.\nPara prosseguir, é necessário desmarcar essa audiência.\nClique em OK para desmarcar e prosseguir, ou em Cancelar para cancelar para fazer manualmente?') === true) alert('Desmarcar');//desmarcar
     } else {
-        preparePayload();
+        alert('Há erros no formulário!');
     }
 }
 
-function preparePayload() {
-    var urlParaAbrir = '';
-    var urlHost = '';
-    var urlOrigin = '';
-    var urlReferer = '';
-    var responseJson = '';
+async function changeGigsSelect() {
+    if (document.getElementById('aud-aid-append-gigs-select').selectedIndex === 3) {
+        $('#aud-aid-observacao-input').removeAttr('disabled');
+    } else {
+        $('#aud-aid-observacao-input').attr('disabled', 'disabled');
+        $('#aud-aid-observacao-input')[0].value = '';
+    }
+}
+//------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    if (urlAtual.includes("homologacao")) {
-        urlParaAbrir = 'https://pje-homologacao.trt9.jus.br/pje-comum-api/api/pautasaudiencias/audiencias';
-        urlHost = 'pje-homologacao.trt9.jus.br';
-        urlOrigin = 'https://pje-homologacao.trt9.jus.br';
-        urlReferer = 'https://pje-homologacao.trt9.jus.br/pjekz/pauta-audiencias';
+/*
+Funções de preparação para requisitar a designação de audiência e GIGS
+*/
+async function checkAlreadyBookedHearing() {
+    var alreadyBookedHearing = await getAlreadyBookedHearingId();
+    console.log(alreadyBookedHearing);
+    if (alreadyBookedHearing != null && alreadyBookedHearing != undefined) {
+        openRebookConfirm('Redesignação','Este processo já tinha audiência designada',alreadyBookedHearing.id);
+    } else {
+        prepareBookPayload();
     }
-    else if (urlAtual.includes("treinamento")) {
-        urlParaAbrir = 'https://pje-treinamento.trt9.jus.br/pje-comum-api/api/pautasaudiencias/audiencias';
-        urlHost = 'pje-treinamento.trt9.jus.br';
-        urlOrigin = 'https://pje-treinamento.trt9.jus.br';
-        urlReferer = 'https://pje-treinamento.trt9.jus.br/pjekz/pauta-audiencias';
-    }
-    else {
-        urlParaAbrir = 'https://pje.trt9.jus.br/pje-comum-api/api/pautasaudiencias/audiencias';
-        urlHost = 'pje.trt9.jus.br';
-        urlOrigin = 'https://pje.trt9.jus.br';
-        urlReferer = 'https://pje.trt9.jus.br/pjekz/pauta-audiencias';
-    }
+}
 
+async function prepareBookPayload() {
+    if (debugLevel >= 3) console.log("AudAid - Entrei na função prepareBookPayload", new Date());
     var tipo = $('#aud-aid-hearing-type-select').val();
+    var idTipo = null;
     var videoChecked = $('#aud-aid-video-call-checkbox')[0].checked;
     var agreementChecked = $('#aud-aid-agreement-week-radio')[0].checked;
     var executionChecked = $('#aud-aid-execution-week-radio')[0].checked;
-    var phase = $('#aud-aid-process-phase').text().substr(7);
+    var phase = processo.labelFaseProcessual;
 
     if (videoChecked === null || videoChecked === undefined) videoChecked = false;
     if (agreementChecked === null || agreementChecked === undefined) agreementChecked = false;
@@ -401,72 +502,73 @@ function preparePayload() {
 
     switch (parseInt(tipo)) {
         case 1: //Conciliação
-            console.log("Entrei no case 1 Conciliação");
             if (phase === "Conhecimento") {
-                console.log("Entrei no case 1 Conciliação - fase Conhecimento");
                 if (agreementChecked) {
-                    console.log("Entrei no case 1 Conciliação - fase conhecimento Semana Conciliação");
-                    if (videoChecked) idTipo = "31";  //Conciliação em Conhecimento por videoconferência - Semana Nacional de Conciliação
-                    else idTipo = "30";               //Conciliação em Conhecimento - Semana Nacional de Conciliação
+                    if (videoChecked) tipoString = 'Conciliação em Conhecimento por videoconferência - Semana Nacional de Conciliação';
+                    else tipoString = 'Conciliação em Conhecimento - Semana Nacional de Conciliação';
                 } else {
-                    console.log("Entrei no case 1 Conciliação - fase conhecimento Semana Conciliação");
-                    if (videoChecked) idTipo = "3";   //Conciliação em Conhecimento por videoconferência
-                    else idTipo = "1";                //Conciliação em Conhecimento
+                    if (videoChecked) tipoString = 'Conciliação em Conhecimento por videoconferência';
+                    else tipoString = 'Conciliação em Conhecimento';
                 }
             } else if (phase === "Execução") {
                 if (executionChecked) {
-                    if (videoChecked) idTipo = "35";  //Conciliação em Execução por videoconferência - Semana Nacional de Execução
-                    else idTipo = "34";               //Conciliação em Execução - Semana Nacional de Execução
+                    if (videoChecked) tipoString = 'Conciliação em Execução por videoconferência - Semana Nacional de Execução';
+                    else tipoString = 'Conciliação em Execução - Semana Nacional de Execução';
                 } else if (agreementChecked) {
-                    if (videoChecked) idTipo = "33";  //Conciliação em Execução por videoconferência - Semana Nacional de Conciliação
-                    else idTipo = "32";               //Conciliação em Execução - Semana Nacional de Conciliação
+                    if (videoChecked) tipoString = 'Conciliação em Execução por videoconferência - Semana Nacional de Conciliação';
+                    else tipoString = 'Conciliação em Execução - Semana Nacional de Conciliação';
                 } else {
-                    if (videoChecked) idTipo = "19";  //Conciliação em Execução por videoconferência
-                    else idTipo = "2";                //Conciliação em Execução
+                    if (videoChecked) tipoString = 'Conciliação em Execução por videoconferência';
+                    else tipoString = 'Conciliação em Execução';
                 }
             }
             break;
         case 2: //Inicial
-            if (ritoParaMarcar === 'ATSum') {
-                if (videoChecked) idTipo = "27";      //Inicial por videoconferência (rito sumaríssimo)
-                else idTipo = "15";                   //Inicial (rito sumaríssimo)
+            if (processo.classeJudicial.sigla === 'ATSum') {
+                if (videoChecked) tipoString = 'Inicial por videoconferência (rito sumaríssimo)';
+                else tipoString = 'Inicial (rito sumaríssimo)';
             } else {
-                if (videoChecked) idTipo = "20";      //Inicial por videoconferência
-                else idTipo = "3";                    //Inicial
+                if (videoChecked) tipoString = 'Inicial por videoconferência';
+                else tipoString = 'Inicial';
             }
             break;
         case 3: //Instrução
-            if (ritoParaMarcar === 'ATSum') {
-                if (videoChecked) idTipo = "25";      //Instrução por videoconferência (rito sumaríssimo)
-                else idTipo = "11";                   //Instrução (rito sumaríssimo)
+            if (processo.classeJudicial.sigla === 'ATSum') {
+                if (videoChecked) tipoString = 'Instrução por videoconferência (rito sumaríssimo)';
+                else tipoString = 'Instrução (rito sumaríssimo)';
             } else {
-                if (videoChecked) idTipo = "22";      //Instrução por videoconferência
-                else idTipo = "6";                    //Instrução
+                if (videoChecked) tipoString = 'Instrução por videoconferência';
+                else tipoString = 'Instrução';
             }
             break;
         case 4: //Encerramento de instrução
-            if (videoChecked) idTipo = "23";          //Encerramento de instrução por videoconferência
-            else idTipo = "9";                        //Encerramento de instrução
+            if (videoChecked) tipoString = 'Encerramento de instrução por videoconferência';
+            else tipoString = 'Encerramento de instrução';
             break;
         case 5: //Julgamento
-            idTipo = "4";                             //Julgamento
-            // idTipo = "7";                             //Julgamento
+            tipoString = 'Julgamento';
             break;
         case 6: //Una
-            if (ritoParaMarcar === 'ATSum') {
-                if (videoChecked) idTipo = "29";      //Una por videoconferência (rito sumaríssimo)
-                else idTipo = "17";                   //Una (rito sumaríssimo)
+            if (processo.classeJudicial.sigla === 'ATSum') {
+                if (videoChecked) tipoString = 'Una por videoconferência (rito sumaríssimo)';
+                else tipoString = 'Una (rito sumaríssimo)';
             } else {
-                if (videoChecked) idTipo = "21";      //Una por videoconferência
-                else idTipo = "5";                    //Una
+                if (videoChecked) tipoString = 'Una por videoconferência';
+                else tipoString = 'Una';
             }
             break;
         case 7: //Inquirição de testemunha
-            if (videoChecked) idTipo = "24";          //Inquirição de testemunha por videoconferência (juízo deprecado)
-            else idTipo = "10";                       //Inquirição de testemunha (juízo deprecado)
+            if (videoChecked) tipoString = 'Inquirição de testemunha por videoconferência (juízo deprecado)';
+            else tipoString = 'Inquirição de testemunha (juízo deprecado)';
             break;
         default:
             break;
+    }
+
+    for (i = 0; i < tiposDeAudiencia.length; i++) {
+        if (tiposDeAudiencia[i].descricao === tipoString) {
+            idTipo = tiposDeAudiencia[i].id;
+        }
     }
 
     dataParaMarcar = $('#aud-aid-date-input').val();
@@ -491,16 +593,106 @@ function preparePayload() {
         "idProcesso": parseInt(idProcesso),
         "idSalaFisica": idSalaFisica
     };
-    console.log("AudAid - PayloadJson pronto.", payloadJson, new Date());
+    if (debugLevel >= 3) console.log("AudAid - PayloadJson pronto.", payloadJson, new Date());
+    sendBookHearingPostRequest(payloadJson);
+}
 
-    //Faz requisiçao POST para gravar a audiência
+async function prepareCancelPayload(idToCancel) {
+    var payloadJson = [idToCancel];
+    if (debugLevel >= 3) console.log("AudAid - Cancel PayloadJson pronto.", payloadJson, new Date());
+    sendCancelHearingPatchRequest(payloadJson);
+}
+
+function checkGigs() {
+    var indiceSelecionado = parseInt(document.getElementById('aud-aid-append-gigs-select').selectedIndex);
+    if (debugLevel >= 3) console.log('AudAid - dentro da checkGIGS', indiceSelecionado);
+    if (indiceSelecionado > 0) {
+        if (debugLevel >= 3) console.log("AudAid - CheckGIGS - Precisa marcar GIGS.", indiceSelecionado, new Date());
+        return true;
+    }
+    else {
+        if (debugLevel >= 3) console.log("AudAid - CheckGIGS - Não precisa marcar GIGS.", indiceSelecionado, new Date());
+        return false;
+    }
+}
+
+async function prepareGigsPayload() {
+    var observacao = parseInt(document.getElementById('aud-aid-append-gigs-select').selectedIndex);
+    switch (observacao) {
+        case 1:
+            observacao = "RJ1";
+            break;
+        case 2:
+            observacao = "Cumprir";
+            break;
+        case 3:
+            observacao = $('#aud-aid-observacao-input').val();
+            break;
+        default:
+            observacao = 0;
+            break;
+    }
+
+    if (observacao !== 0) {
+        var payloadJson = {
+            "dataPrazo": new Date(new Date().getTime() + (2 * 24 * 60 * 60 * 1000)).toISOString(),
+            // "dataPrazo": "2022-07-08T03:00:00.000Z",
+            "idProcesso": idProcesso,
+            "observacao": observacao,
+            "tipoAtividade": {
+                "descricao": "Prazo",
+                "id": 24
+            }
+        };
+        if (debugLevel >= 3) console.log("AudAid - GIGS PayloadJson pronto.", payloadJson, new Date());
+        sendCreateGigsPostRequest(payloadJson);
+    } //else alert('Não é pra criar GIGS!');
+
+}
+
+async function getAlreadyBookedHearingId() {
+    var urlParaAbrir = getUrlToOpen('pje-comum-api/api/processos/id/' + parseInt(idProcesso) + '/audiencias?status=M');
+    var resposta = await fetch(urlParaAbrir);
+    var audiencia = await resposta.json();
+    return audiencia[0];
+}
+//------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+/*
+Funções de envio de requisição
+*/
+async function sendCancelHearingPatchRequest(payload) {
+    var urlParaAbrir = '';
+    var urlHost = '';
+    var urlOrigin = '';
+    var urlReferer = '';
+    var responseJson = '';
+    if (urlAtual.includes("homologacao")) {
+        urlParaAbrir = 'https://pje-homologacao.trt9.jus.br/pje-comum-api/api/pautasaudiencias/audiencias/cancelamento';
+        urlHost = 'pje-homologacao.trt9.jus.br';
+        urlOrigin = 'https://pje-homologacao.trt9.jus.br';
+        urlReferer = 'https://pje-homologacao.trt9.jus.br/pjekz/processo/' + idProcesso + '/detalhe';
+    }
+    else if (urlAtual.includes("treinamento")) {
+        urlParaAbrir = 'https://pje-treinamento.trt9.jus.br/pje-comum-api/api/pautasaudiencias/audiencias/cancelamento';
+        urlHost = 'pje-treinamento.trt9.jus.br';
+        urlOrigin = 'https://pje-treinamento.trt9.jus.br';
+        urlReferer = 'https://pje-treinamento.trt9.jus.br/pjekz/processo/' + idProcesso + '/detalhe';
+    }
+    else {
+        urlParaAbrir = 'https://pje.trt9.jus.br/pje-comum-api/api/pautasaudiencias/audiencias/cancelamento';
+        urlHost = 'pje.trt9.jus.br';
+        urlOrigin = 'https://pje.trt9.jus.br';
+        urlReferer = 'https://pje.trt9.jus.br/pjekz/processo/' + idProcesso + '/detalhe';
+    }
+    //Faz requisiçao PATCH para cancelar a audiência que já estava designada
     let novoxhr = new XMLHttpRequest();
-    novoxhr.open('POST', urlParaAbrir);
+    novoxhr.open('PATCH', urlParaAbrir);
     novoxhr.setRequestHeader('Accept', 'application/json, text/plain, */*');
     novoxhr.setRequestHeader('Accept-Encoding', 'gzip, deflate, br');
     novoxhr.setRequestHeader('Accept-Language', 'pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3');
     novoxhr.setRequestHeader('Connection', 'keep-alive');
-    novoxhr.setRequestHeader('Content-Length', new TextEncoder().encode(JSON.stringify(payloadJson)).length);
+    novoxhr.setRequestHeader('Content-Length', new TextEncoder().encode(payload.length));
     novoxhr.setRequestHeader('Content-type', 'application/json');
     novoxhr.setRequestHeader('Cookie', document.cookie);
     novoxhr.setRequestHeader('Host', urlHost);
@@ -509,42 +701,84 @@ function preparePayload() {
     novoxhr.setRequestHeader('TE', 'Trailers');
     novoxhr.setRequestHeader('User-Agent', window.navigator.userAgent);
     novoxhr.setRequestHeader('X-XSRF-TOKEN', document.cookie.substr(document.cookie.search('Xsrf-Token='), 111).split('=')[1]);
-
     novoxhr.onload = () => {
         console.log(JSON.parse(novoxhr.responseText));
         responseJson = JSON.parse(novoxhr.responseText);
-        if (responseJson.status === "Designada") {
-            if (window.confirm("Audiência designada com sucesso!\nPara que a audiência fique visível, é necessário recarregar a página.\nDeseja fazer isso agora?")) {
-                location.reload();
-            }
+        if (responseJson != null) {
+            prepareBookPayload();
         } else {
-            if (responseJson.codigoErro === "PJE-063") alert(responseJson.mensagem);
+            alert(responseJson.mensagem);
         }
     }
-
-    novoxhr.send(JSON.stringify(payloadJson));
-
-    console.log(novoxhr);
-}
-//B72E00758DB0D927592ACA7054BB02B19FBAB809198E7DA55F4072406A13F62E2E0E88CA18F71480CEED538F3964EA815200 --> exemplo de token
-
-function changeGigsSelect() {
-    if (document.getElementById('aud-aid-append-gigs-select').selectedIndex === 3) {
-        $('#aud-aid-observacao-input').removeAttr('disabled');
-    } else {
-        $('#aud-aid-observacao-input').attr('disabled', 'disabled');
-        $('#aud-aid-observacao-input')[0].value = '';
-    }
+    novoxhr.send(JSON.stringify(payload));
+    if (debugLevel >= 3) console.log("AudAid - XHR de Cancel", novoxhr, new Date());
 }
 
-function criaGigs() {
+async function sendBookHearingPostRequest(payload) {
     var urlParaAbrir = '';
     var urlHost = '';
     var urlOrigin = '';
     var urlReferer = '';
     var responseJson = '';
-    var observacao = parseInt(document.getElementById('aud-aid-append-gigs-select').selectedIndex);
+    if (urlAtual.includes("homologacao")) {
+        urlParaAbrir = 'https://pje-homologacao.trt9.jus.br/pje-comum-api/api/pautasaudiencias/audiencias';
+        urlHost = 'pje-homologacao.trt9.jus.br';
+        urlOrigin = 'https://pje-homologacao.trt9.jus.br';
+        urlReferer = 'https://pje-homologacao.trt9.jus.br/pjekz/pauta-audiencias';
+    }
+    else if (urlAtual.includes("treinamento")) {
+        urlParaAbrir = 'https://pje-treinamento.trt9.jus.br/pje-comum-api/api/pautasaudiencias/audiencias';
+        urlHost = 'pje-treinamento.trt9.jus.br';
+        urlOrigin = 'https://pje-treinamento.trt9.jus.br';
+        urlReferer = 'https://pje-treinamento.trt9.jus.br/pjekz/pauta-audiencias';
+    }
+    else {
+        urlParaAbrir = 'https://pje.trt9.jus.br/pje-comum-api/api/pautasaudiencias/audiencias';
+        urlHost = 'pje.trt9.jus.br';
+        urlOrigin = 'https://pje.trt9.jus.br';
+        urlReferer = 'https://pje.trt9.jus.br/pjekz/pauta-audiencias';
+    }
+    //Faz requisiçao POST para gravar a audiência
+    let novoxhr = new XMLHttpRequest();
+    novoxhr.open('POST', urlParaAbrir);
+    novoxhr.setRequestHeader('Accept', 'application/json, text/plain, */*');
+    novoxhr.setRequestHeader('Accept-Encoding', 'gzip, deflate, br');
+    novoxhr.setRequestHeader('Accept-Language', 'pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3');
+    novoxhr.setRequestHeader('Connection', 'keep-alive');
+    novoxhr.setRequestHeader('Content-Length', new TextEncoder().encode(JSON.stringify(payload)).length);
+    novoxhr.setRequestHeader('Content-type', 'application/json');
+    novoxhr.setRequestHeader('Cookie', document.cookie);
+    novoxhr.setRequestHeader('Host', urlHost);
+    novoxhr.setRequestHeader('Origin', urlOrigin);
+    novoxhr.setRequestHeader('Referer', urlReferer);
+    novoxhr.setRequestHeader('TE', 'Trailers');
+    novoxhr.setRequestHeader('User-Agent', window.navigator.userAgent);
+    novoxhr.setRequestHeader('X-XSRF-TOKEN', document.cookie.substr(document.cookie.search('Xsrf-Token='), 111).split('=')[1]);
+    novoxhr.onload = () => {
+        if (debugLevel >= 3) console.log("AudAid - Book JSON response", JSON.parse(novoxhr.responseText));
+        responseJson = JSON.parse(novoxhr.responseText);
+        if (responseJson.status === "Designada") {
+            var temGigs = checkGigs();
+            if (debugLevel >= 3) console.log("AudAid - CheckGIGS", temGigs, new Date());
+            if (temGigs) prepareGigsPayload();
+            else {
+                if (debugLevel >= 3) console.log("AudAid - Não precisou marcar GIGS. Finalizando...", new Date());
+                openReloadConfirm('Sucesso!', 'Audiência designada com sucesso!\nAtualize a página para ver as alterações');
+            }
+        } else {
+            openAlert('Erro!', JSON.stringify(responseJson.mensagem));
+        }
+    }
+    novoxhr.send(JSON.stringify(payload));
+    if (debugLevel >= 3) console.log("AudAid - XHR de Designar", novoxhr, new Date());
+}
 
+async function sendCreateGigsPostRequest(payload) {
+    var urlParaAbrir = '';
+    var urlHost = '';
+    var urlOrigin = '';
+    var urlReferer = '';
+    var responseJson = '';
     if (urlAtual.includes("homologacao")) {
         urlParaAbrir = 'https://pje-homologacao.trt9.jus.br/pje-gigs-api/api/atividade';
         urlHost = 'pje-homologacao.trt9.jus.br';
@@ -561,97 +795,34 @@ function criaGigs() {
         urlParaAbrir = 'https://pje.trt9.jus.br/pje-gigs-api/api/atividade';
         urlHost = 'pje.trt9.jus.br';
         urlOrigin = 'https://pje.trt9.jus.br';
-        urlReferer = 'https://pje.trt9.jus.br/pjekz/processo/1351163/' + idProcesso + '/detalhe';
+        urlReferer = 'https://pje.trt9.jus.br/pjekz/processo/' + idProcesso + '/detalhe';
     }
-
-    console.log('observacao', observacao);
-    switch (observacao) {
-        case 1:
-            observacao = "RJ1";
-            break;
-        case 2:
-            observacao = "Cumprir";
-            break;
-        case 3:
-            observacao = $('#aud-aid-observacao-input').val();
-            break;
-        default:
-            break;
-    }
-
-    if (observacao !== 0) {
-        var payloadJson = {
-            "dataPrazo": "2022-07-08T03:00:00.000Z",
-            "idProcesso": idProcesso,
-            "observacao": observacao,
-            "tipoAtividade": {
-                "descricao": "Prazo",
-                "id": 24
-            }
-        };
-        console.log("AudAid - GIGS PayloadJson pronto.", payloadJson, new Date());
-
-        //Faz requisiçao POST para gravar a audiência
-        let novoxhr = new XMLHttpRequest();
-        novoxhr.open('POST', urlParaAbrir);
-        novoxhr.setRequestHeader('Accept', 'application/json, text/plain, */*');
-        novoxhr.setRequestHeader('Accept-Encoding', 'gzip, deflate, br');
-        novoxhr.setRequestHeader('Accept-Language', 'pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3');
-        novoxhr.setRequestHeader('Connection', 'keep-alive');
-        novoxhr.setRequestHeader('Content-Length', new TextEncoder().encode(JSON.stringify(payloadJson)).length);
-        novoxhr.setRequestHeader('Content-type', 'application/json');
-        novoxhr.setRequestHeader('Cookie', document.cookie);
-        novoxhr.setRequestHeader('Host', urlHost);
-        novoxhr.setRequestHeader('Origin', urlOrigin);
-        novoxhr.setRequestHeader('Referer', urlReferer);
-        novoxhr.setRequestHeader('TE', 'Trailers');
-        novoxhr.setRequestHeader('User-Agent', window.navigator.userAgent);
-        novoxhr.setRequestHeader('X-XSRF-TOKEN', document.cookie.substr(document.cookie.search('Xsrf-Token='), 111).split('=')[1]);
-
-        novoxhr.onload = () => {
-            console.log(JSON.parse(novoxhr.responseText));
-            responseJson = JSON.parse(novoxhr.responseText);
-            if (responseJson.usuarioCriacao !== null) {
-                if (window.confirm("Gigs criado com sucesso!\nPara que o Gigs fique visível, é necessário recarregar a página.\nDeseja fazer isso agora?")) {
-                    location.reload();
-                }
-            }
-        }
-
-        novoxhr.send(JSON.stringify(payloadJson));
-
-        console.log(novoxhr);
-    } else alert('Não é pra criar GIGS!');
-
-}
-
-function getAlreadyBookedHearingId() {
-    var urlParaAbrir = "https://pje-homologacao.trt9.jus.br/pje-comum-api/api/processos/id/"+parseInt(idProcesso)+"/audiencias?status=M"
+    //Faz requisiçao POST para criar GIGS
     let novoxhr = new XMLHttpRequest();
-    novoxhr.open('GET', urlParaAbrir);
+    novoxhr.open('POST', urlParaAbrir);
     novoxhr.setRequestHeader('Accept', 'application/json, text/plain, */*');
     novoxhr.setRequestHeader('Accept-Encoding', 'gzip, deflate, br');
     novoxhr.setRequestHeader('Accept-Language', 'pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3');
     novoxhr.setRequestHeader('Connection', 'keep-alive');
+    novoxhr.setRequestHeader('Content-Length', new TextEncoder().encode(JSON.stringify(payload)).length);
+    novoxhr.setRequestHeader('Content-type', 'application/json');
     novoxhr.setRequestHeader('Cookie', document.cookie);
     novoxhr.setRequestHeader('Host', urlHost);
+    novoxhr.setRequestHeader('Origin', urlOrigin);
     novoxhr.setRequestHeader('Referer', urlReferer);
     novoxhr.setRequestHeader('TE', 'Trailers');
     novoxhr.setRequestHeader('User-Agent', window.navigator.userAgent);
     novoxhr.setRequestHeader('X-XSRF-TOKEN', document.cookie.substr(document.cookie.search('Xsrf-Token='), 111).split('=')[1]);
 
     novoxhr.onload = () => {
-        console.log(JSON.parse(novoxhr.responseText));
+        // console.log(JSON.parse(novoxhr.responseText));
         responseJson = JSON.parse(novoxhr.responseText);
-        if (responseJson.status != null) {
-            console.log(responseJson.id);
-            return responseJson.id;
+        if (responseJson.usuarioCriacao !== null) {
+            openReloadConfirm('Sucesso', 'Audiência e GIGS criados com sucesso!\nAtualize a página para ver as alterações');
         } else {
-            return null;
+            openAlert('Erro', JSON.stringify(responseJson));
         }
     }
-
-    novoxhr.send();
-
-    console.log(novoxhr);
+    novoxhr.send(JSON.stringify(payload));
+    if (debugLevel >= 3) console.log("AudAid - XHR de Create GIGS", novoxhr, new Date());
 }

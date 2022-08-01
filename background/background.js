@@ -52,8 +52,6 @@ function handleInstalled(details) {
             openTerms();
         }
     });
-  }
-  
-  
-  browser.runtime.onInstalled.addListener(handleInstalled);
-  
+}
+
+browser.runtime.onInstalled.addListener(handleInstalled);

@@ -1,29 +1,43 @@
-document.getElementsByTagName('input')[0].addEventListener("change", habilitaBotaoConcordar);
 document.getElementsByTagName('button')[0].addEventListener("click", concordaTermos);
 
-function habilitaBotaoConcordar() {
-    if ($('#aud-aid-terms-agreement-checkbox')[0].checked) {
-        $('#aud-aid-terms-agreement-button').removeAttr('disabled');
-        $('#aud-aid-terms-agreement-button').attr('title', 'Clique para concordar com os termos');
-    } else {
-        $('#aud-aid-terms-agreement-button').attr('disabled', 'disabled');
-        $('#aud-aid-terms-agreement-button').attr('title', 'Clique na caixa acima para habilitar o botão');
-    }
+async function concordaTermos() {
+    $("#aud-aid-alert-message").dialog('open');
 }
 
-function concordaTermos() {
-    if ($('#aud-aid-terms-agreement-checkbox')[0].checked) {
-        browser.storage.local.set({'concordo': true});
-        alert("concordei");
-    } else
-        browser.storage.local.set({'concordo': false});
+function getSuccess(tabInfo) {
+    console.log("Success Tab Info", tabInfo);
+    browser.tabs.remove(tabInfo.id);
+}
+function getError(error) {
+    console.log("Erro", error);
 }
 
-
-function debugTermos() {
-    browser.storage.local.set({'concordo': false});
-}
-
-$(document).ready(function () {
-    $('#aud-aid-terms-disagreement-button').click(debugTermos);
+$(function () {
+    $("#aud-aid-alert-message").dialog({
+        autoOpen: false,
+        show: {
+            effect: "fadeIn",
+            duration: 250
+        },
+        hide: 250,
+        resizable: false,
+        height: "auto",
+        width: 400,
+        modal: true,
+        buttons: {
+            "Concordar": function () {
+                $(this).dialog("close");
+                browser.storage.local.set({ 'audAidConcordo': true });
+                // await Swal.fire({
+                //     icon: 'success',
+                //     text: 'Você concordou com os termos.\nEsta aba será fechada e você\njá pode trabalhar com a extensão.'
+                // });
+                const abaAtual = browser.tabs.getCurrent();
+                abaAtual.then(getSuccess, getError);
+            },
+            Cancel: function () {
+                $(this).dialog("close");
+            }
+        }
+    });
 });

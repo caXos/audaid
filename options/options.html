@@ -1,24 +1,33 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="utf-8">
-			<link rel="stylesheet" href="./options.css" />
-		<title>AudAid - Opções</title>
-	</head>
 
-	<body>
-		<div id="aud-aid-options-header">
-			<h1>AudAid - Opções</h1>
-		</div>
-		<div id="aud-aid-options-content">
-			<label>Forçar audiências por videoconferênicas para Processos do Juízo 100% Digital</label>
-			<input type="checkbox" />
-			<label>Aqui vão os Gigs</label>
-		</div>
-		<div id="aud-aid-options-footer">
-			<button>Gravar</button>
-		</div>
-		<script type="text/javascript" src="./../jquery/jquery.js"></script>
-		<script type="text/javascript" src="options/options.js"></script>
-	</body>
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="./options.css" />
+	<link rel="stylesheet" href="./../jquery/jquery-ui/jquery-ui.css" />
+	<title>AudAid - Opções</title>
+</head>
+
+<body>
+	<div id="aud-aid-options-header">
+		<h1>AudAid - Opções</h1>
+	</div>
+	<div id="aud-aid-options-content">
+		<label for="aud-aid-debug-level-select">Nível de Debug</label>
+		<select id="aud-aid-debug-level-select">
+			<option value=0 selected>0 -> sem logs</option>
+			<option value=1>1 -> avisos</option>
+			<option value=2>2 -> avisos e erros</option>
+			<option value=3>3 -> full debug (ao início, meio e fim de cada função)</option>
+		</select>
+		<label>Aqui vão os Gigs, futuramente</label>
+	</div>
+	<div id="aud-aid-alert-container">
+		<p>Opções gravadas com sucesso</p>
+	</div>
+	<script type="text/javascript" src="./../jquery/core/jquery.js"></script>
+	<script type="text/javascript" src="./options.js"></script>
+	<script type="text/javascript" src="./../jquery/jquery-ui/jquery-ui.js"></script>
+</body>
+
 </html>

@@ -16,6 +16,8 @@ Click nbfs://nbhost/SystemFileSystem/Templates/ClientSide/css.css to edit this t
 
 .aud-aid-modal {
     background-color: white;
+    background-image: url('./img/calendar-alt-solid-01opacity.png');
+    background-size: cover;
     z-index: 99;
     position: absolute;
     left: 0;
@@ -51,6 +53,12 @@ Click nbfs://nbhost/SystemFileSystem/Templates/ClientSide/css.css to edit this t
     cursor: pointer;
     color: white;
 
+}
+.aud-aid-modal-background {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    opacity: 0.1;
 }
 
 .aud-aid-modal-header {

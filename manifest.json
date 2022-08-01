@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "AudAid",
-    "version": "0.1",
+    "version": "0.4",
     "description": "Auxiliar no processo de de designação de audiências no PJeKz",
     "author": "Jorge Henrique Bueno Gomez - Técnico Judiciário - matrícula 82427 - 1ª Vara do Trabalho de Cascavel - Tribunal Regional do Trabalho do Paraná (TRT 9ª Região)",
     "browser_specific_settings": {
@@ -24,13 +24,15 @@
             ],
             "js": [
                 "audaid.js",
-                "jquery/jquery.js",
+                "jquery/core/jquery.js",
+                "jquery/jquery-ui/jquery-ui.js",
                 "options/options.js",
                 "optionsPopup/optionsPopup.js",
                 "termos/termos.js"
             ],
             "css": [
-                "audaid.css"
+                "audaid.css",
+                "jquery/jquery-ui/jquery-ui.css"
             ],
             "run_at": "document_end"
         }
@@ -41,7 +43,7 @@
         ]
       },
     "options_ui": {
-        "page": "options.html",
+        "page": "options/options.html",
         "open_in_tab": true,
         "browser_style": true
     },
