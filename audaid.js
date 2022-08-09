@@ -620,7 +620,7 @@ async function prepareGigsPayload() {
     var observacao = parseInt(document.getElementById('aud-aid-append-gigs-select').selectedIndex);
     switch (observacao) {
         case 1:
-            observacao = "RJ1";
+            observacao = "@RJ1";
             break;
         case 2:
             observacao = "Cumprir";
