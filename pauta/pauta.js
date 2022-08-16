@@ -13,6 +13,7 @@ function daysInMonth(iMonth, iYear)
 pega dados das partes
 https://pje.trt9.jus.br/audapi/rest/pje/audpje/processos/1385415/partes
 https://pje.trt9.jus.br/audapi/rest/pje/audpje/processos/IDDOPROCESSO/partes
+https://pje.trt9.jus.br/pje-comum-api/api/processos/id/1254700/partes
 
 pega dados do processo
 https://pje.trt9.jus.br/pje-comum-api/api/processos/id/IDDOPROCESSO
@@ -26,9 +27,31 @@ https://pje.trt9.jus.br/pje-comum-api/api/pautasaudiencias/classificacoes/dia?id
 pega os perfis do usuário
 https://pje.trt9.jus.br/pje-seguranca/api/token/perfis
 
+pega assuntos dos processos
+https://pje.trt9.jus.br/pje-comum-api/api/processos/id/1325099/assuntos
 
 
 estudar sobre laço "for await ... of"
+
+
+
+
+
+$('#pauta-modal-titulo').dialog({
+        autoOpen: false,
+        show: {
+            effect: "fadeIn",
+            duration: 250
+        },
+        hide: 250,
+        resizable: false,
+        height: "auto",
+        width: "auto",
+        modal: true,
+    });
+
+
+
 */
 var iconeEditarTemplate = `<svg title="Redesignar" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
 <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
@@ -40,8 +63,19 @@ var iconeCancelarTemplate = `<svg xmlns="http://www.w3.org/2000/svg" width="16" 
 </svg>`;
 
 $(document).ready(function () {
-    $('#botao').click(pegaProcessos);
-    $('#botao2').click(constroiAbas);
+    $('#botao').click(constroiAbas);
+    $('#pauta-modal-titulo').dialog({
+        autoOpen: false,
+        show: {
+            effect: "fadeIn",
+            duration: 250
+        },
+        hide: 250,
+        resizable: false,
+        height: "auto",
+        width: 400,
+        modal: true,
+    });
 });
 
 function pegaUrlParaAbrir(suffix) {
@@ -127,7 +161,8 @@ async function constroiAbasMeses(salas) {
     for (i = 0; i < salas.length; i++) {
         for (j = 0; j < salas[i].length; j++) {
             var mesesContainer = $('<div />').attr('id', 'aba-sala-id-' + salas[i][j].id + '-abas-meses').attr('aba', 'aba');
-            var mesesContainerListaMeses = $('<ul />').attr('id', 'aba-sala-id-' + salas[i][j].id + '-lista-meses');
+            // var mesesContainerListaMeses = $('<ul />').attr('id', 'aba-sala-id-' + salas[i][j].id + '-lista-meses');
+            var mesesContainerListaMeses = $('<ul />').attr('id', 'aba-sala-id-' + salas[i][j].id + '-lista-meses').addClass('sticky-tab');
             for (m = 0; m < 12; m++) {
                 var mesDate = new Date(new Date().setMonth(new Date().getMonth() + m));
                 var mesTexto = mesDate.toLocaleString('pt-BR', { month: 'long' }) + mesDate.toLocaleString('pt-BR', { year: 'numeric' })
@@ -153,6 +188,7 @@ async function constroiAbasMeses(salas) {
     }
     $('[aba="aba"]').tabs({
         collapsible: true,
+        active: false
     });
 }
 
@@ -165,109 +201,242 @@ async function pegaProcessos(evt) {
     if (hoje === isoData) diaInicio = objetoData.getDate();
     var diaFim = new Date(new Date().setFullYear(objetoData.getFullYear(), objetoData.getMonth() + 1, 0));
     diaFim = diaFim.getDate();
-    console.log(diaInicio, diaFim, 'mes', objetoData.getMonth());
-    var container = $('#conteudo-aba-sala-id-' + id + '-' + objetoData.getMonth() + '-' + objetoData.getFullYear());
+    var containerTexto = '#conteudo-aba-sala-id-' + id + '-' + objetoData.getMonth() + '-' + objetoData.getFullYear();
+    var container = $(containerTexto);
     if ($(container).text() === 'pautaVazia') {
         $(container).text('');
         //pauta vazia, constroi a tabela
-        var url = pegaUrlParaAbrir('pje-comum-api/api/pautasaudiencias/classificacoes/dia?idSalaAudiencia=' + id + '&data=2022-08-09');
-        console.log(url);
-        var dados = await fetch(url);
-        var auds = await dados.json().then(function (auds) {
-            console.log(auds);
-            if (auds.pautasDoDia.length > 0) {
-                console.log('bora construir a tabela');
-                var header = $('<div />').addClass('h6 border-bottom').text(objetoData.toLocaleDateString() + ', ' + objetoData.toLocaleString('pt-BR', { weekday: 'long' }));
-                var tabela = $('<table />').addClass('table table-striped table-hover align-middle');
-                var tabelaHead = $('<thead />');
-                $(tabelaHead).append( $('<th />').html('Tipo') );
-                $(tabelaHead).append( $('<th />').html('Modalidade') );
-                $(tabelaHead).append( $('<th />').html('Horário') );
-                $(tabelaHead).append( $('<th />').html('Autos') );
-                $(tabelaHead).append( $('<th />').html('Rito') );
-                $(tabelaHead).append( $('<th />').html('Autor') );
-                $(tabelaHead).append( $('<th />').html('Advogado(s) Autor') );
-                $(tabelaHead).append( $('<th />').html('Réu(s)') );
-                $(tabelaHead).append( $('<th />').html('Advogado(s) Réu(s)') );
-                $(tabelaHead).append( $('<th />').html('Observações') );
-                $(tabelaHead).append( $('<th />').html('Ações') );
-                
-                var tabelaBody = $('<tbody />');
-                for (i=0; i<auds.pautasDoDia.length; i++) {
-                    var tabelaLinha = $('<tr />');
-                    $(tabelaLinha).append( $('<td />').html(auds.pautasDoDia[i].tipo.descricao.split(" ")[0]) );
-                    if (auds.pautasDoDia[i].processo.juizoDigital) $(tabelaLinha).append( $('<td />').html('Vídeo') );
-                    else $(tabelaLinha).append( $('<td />').html('Presencial') );
-                    $(tabelaLinha).append( $('<td />').html(auds.pautasDoDia[i].pautaAudienciaHorario.horaInicial.substring(0,5)+'-'+auds.pautasDoDia[i].pautaAudienciaHorario.horaFinal.substring(0,5)) );
-                    $(tabelaLinha).append( $('<td />').html(auds.pautasDoDia[i].nrProcesso) );
-                    $(tabelaLinha).append( $('<td />').html(auds.pautasDoDia[i].processo.classeJudicial.sigla) );
-                    var poloAtivo = $('<td />');
-                    // for (a=0; a<auds.pautasDoDia[i].poloAtivo.length; a++) {
-                    //     var poloAtivoNome = $('<span />').text(auds.pautasDoDia[i].poloAtivo[a].nome);
-                    //     $(poloAtivo).append(poloAtivoNome);
-                    // }
-                    $(poloAtivo).text(auds.pautasDoDia[i].poloAtivo.nome);
-                    $(tabelaLinha).append(poloAtivo);
-                    $(tabelaLinha).append( $('<td />').html('Ainda não peguei advogados') );
-                    var poloPassivo = $('<td />');
-                    // for (a=0; a<auds.pautasDoDia[i].poloPassivo.length; a++) {
-                    //     var poloPassivoNome = $('<span />').text(auds.pautasDoDia[i].poloPassivo[a].nome);
-                    //     $(poloPassivo).append(poloPassivoNome);
-                    // }
-                    $(poloPassivo).text(auds.pautasDoDia[i].poloPassivo.nome);
-                    $(tabelaLinha).append(poloPassivo);
-                    $(tabelaLinha).append( $('<td />').html('Ainda não peguei advogados') );
-                    $(tabelaLinha).append( $('<td />').text('Obs') );
-                    $(tabelaLinha).append( $('<td />').text('Act') );
-                    $(tabelaBody).append(tabelaLinha);
+        for (d = diaInicio; d <= diaFim; d++) {
+            // var novaData = new Date(objetoData.getFullYear(), objetoData.getMonth(), new Date().setDate(d));
+            var novaData = objetoData;
+            novaData.setDate(d);
+            var dataIso = novaData;
+            novaData = novaData.toISOString().substring(0, 10);
+            var url = pegaUrlParaAbrir('pje-comum-api/api/pautasaudiencias/classificacoes/dia?idSalaAudiencia=' + id + '&data=' + novaData);
+            var dados = await fetch(url);
+            var auds = await dados.json().then(async function (auds) {
+                var advs = [];
+                if (auds.pautasDoDia != undefined) {
+                    advs.push(await pegaAdvogados(auds));
                 }
-                console.log(tabelaBody);
-                $(tabela).append(tabelaHead);
-                $(tabela).append(tabelaBody);
-                
-                $(container).append(header);
-                $(container).append(tabela);
-            } else
-                $(container).text('Não há pautas programadas para este dia.');
-        });
+                var resultadoConsolidado = {
+                    auds: auds,
+                    advs: advs,
+                    dataIso: dataIso
+                };
+                return resultadoConsolidado;
+            }).then(async function (resultadoConsolidado) {
+                await constroiTabela(resultadoConsolidado, id, containerTexto);
+            });
+        }
+        //tira o overlay
     }
     //senão, nem faz nada
+}
+
+async function pegaAdvogados(auds) {
+    var advs = [];
+    for (i = 0; i < auds.pautasDoDia.length; i++) {
+        //verifica se tem pauta programada no PJe (daí não vai ter idProcesso)
+        if (auds.pautasDoDia[i].idProcesso !== null && auds.pautasDoDia[i].idProcesso !== undefined && auds.pautasDoDia[i].idProcesso !== '') {
+            var url = pegaUrlParaAbrir('pje-comum-api/api/processos/id/' + auds.pautasDoDia[i].idProcesso + '/partes');
+            var resposta = await fetch(url);
+            var processo = await resposta.json().then(async function (processo) {
+                var advogados = {
+                    id: auds.pautasDoDia[i].idProcesso,
+                    autor: processo.ATIVO[0].representantes,
+                    reu: processo.PASSIVO[0].representantes
+                };
+                advs.push(advogados);
+            });
+        } else {
+            var advogados = {
+                id: 0,
+                autor: 0,
+                reu: 0
+            };
+            advs.push(advogados);
+        }
+    }
+    return advs;
+    //await constroiTabela(auds, advs, id, containerTexto);
+}
+
+async function constroiTabela(resultadoConsolidado, id, containerTexto) {
+    var container = $(containerTexto);
+    var header = $('<div />').addClass('h6 border-bottom').text(resultadoConsolidado.dataIso.toLocaleDateString() + ', ' + resultadoConsolidado.dataIso.toLocaleString('pt-BR', { weekday: 'long' }));
+    if (resultadoConsolidado.auds.pautasDoDia !== null && resultadoConsolidado.auds.pautasDoDia !== undefined && resultadoConsolidado.auds.pautasDoDia !== '') {
+        var tabela = $('<table />').addClass('table table-light table-striped table-hover align-middle');
+        var tabelaHead = $('<thead />');
+        $(tabelaHead).append($('<th />').html('Tipo'));
+        $(tabelaHead).append($('<th />').html('Modalidade'));
+        $(tabelaHead).append($('<th />').html('Horário'));
+        $(tabelaHead).append($('<th />').html('Autos'));
+        $(tabelaHead).append($('<th />').html('Rito'));
+        $(tabelaHead).append($('<th />').html('Autor'));
+        $(tabelaHead).append($('<th />').html('Advogado(s) Autor'));
+        $(tabelaHead).append($('<th />').html('Réu(s)'));
+        $(tabelaHead).append($('<th />').html('Advogado(s) Réu(s)'));
+        $(tabelaHead).append($('<th />').html('Observações'));
+        $(tabelaHead).append($('<th />').html('Ações'));
+        $(tabela).append(tabelaHead);
+
+        var tabelaBody = $('<tbody />');
+        // for (audiencia of auds.pautasDoDia) {
+
+        // }
+        for (a = 0; a < resultadoConsolidado.auds.pautasDoDia.length; a++) {
+            var tabelaLinha = $('<tr />');
+            //Verifica se a linha tem uma audiência ou uma vaga
+            if (resultadoConsolidado.auds.pautasDoDia[a].idProcesso !== null && resultadoConsolidado.auds.pautasDoDia[a].idProcesso !== undefined && resultadoConsolidado.auds.pautasDoDia[a].idProcesso !== '') {
+                //Constrói linha com audiência
+                $(tabelaLinha).append($('<td />').html(resultadoConsolidado.auds.pautasDoDia[a].tipo.descricao.split(" ")[0]));
+                if (resultadoConsolidado.auds.pautasDoDia[a].processo.juizoDigital) {
+                    $(tabelaLinha).append($('<td />').html('Vídeo'));
+                    $(tabelaLinha).addClass('table-success');
+                }
+                else $(tabelaLinha).append($('<td />').html('Presencial'));
+                // $(tabelaLinha).append($('<td />').html(resultadoConsolidado.auds.pautasDoDia[a].pautaAudienciaHorario.horaInicial.substring(0, 5) + ' a ' + resultadoConsolidado.auds.pautasDoDia[a].pautaAudienciaHorario.horaFinal.substring(0, 5)));
+                $(tabelaLinha).append($('<td />').html(resultadoConsolidado.auds.pautasDoDia[a].pautaAudienciaHorario.horaInicial.substring(0, 5)));
+                $(tabelaLinha).append($('<td />').html(resultadoConsolidado.auds.pautasDoDia[a].nrProcesso));
+                $(tabelaLinha).append($('<td />').html(resultadoConsolidado.auds.pautasDoDia[a].processo.classeJudicial.sigla));
+                var poloAtivo = $('<td />');
+                // for (a=0; a<auds.pautasDoDia[i].poloAtivo.length; a++) {
+                //     var poloAtivoNome = $('<span />').text(auds.pautasDoDia[i].poloAtivo[a].nome);
+                //     $(poloAtivo).append(poloAtivoNome);
+                // }
+                $(poloAtivo).text(resultadoConsolidado.auds.pautasDoDia[a].poloAtivo.nome);
+                $(tabelaLinha).append(poloAtivo);
+                if (resultadoConsolidado.advs[0][a].autor !== null && resultadoConsolidado.advs[0][a].autor !== undefined && resultadoConsolidado.advs[0][a].autor !== '')
+                    $(tabelaLinha).append($('<td />').html(resultadoConsolidado.advs[0][a].autor[0].nome));
+                else
+                    // $(tabelaLinha).append($('<td />').html('Sem advogado(a)(s)'));
+                    $(tabelaLinha).append($('<td />').html(''));
+                var poloPassivo = $('<td />');
+                //             // for (a=0; a<auds.pautasDoDia[i].poloPassivo.length; a++) {
+                //             //     var poloPassivoNome = $('<span />').text(auds.pautasDoDia[i].poloPassivo[a].nome);
+                //             //     $(poloPassivo).append(poloPassivoNome);
+                //             // }
+                $(poloPassivo).text(resultadoConsolidado.auds.pautasDoDia[a].poloPassivo.nome);
+                $(tabelaLinha).append(poloPassivo);
+                if (resultadoConsolidado.advs[0][a].reu !== null && resultadoConsolidado.advs[0][a].reu !== undefined && resultadoConsolidado.advs[0][a].reu !== '')
+                    $(tabelaLinha).append($('<td />').html(resultadoConsolidado.advs[0][a].reu[0].nome));
+                else
+                    // $(tabelaLinha).append($('<td />').html('Sem advogado(a)(s)'));
+                    $(tabelaLinha).append($('<td />').html(''));
+                // $(tabelaLinha).append($('<td />').text('Obs'));
+                var iconeObservacao = $('<i />').addClass('bi bi-card-text mx-1').attr('title', 'Abrir GIGS').attr('role', 'button').click(abreAviso);
+                $(tabelaLinha).append($('<td />').append(iconeObservacao));
+                // $(tabelaLinha).append($('<td />').text('Act'));
+                var iconeAdiarAud = $('<i />').addClass('bi bi-arrow-bar-right mx-1').attr('title', 'Adiar audiência').attr('role', 'button').click(abreAviso);
+                var iconeDesmarcarAud = $('<i />').addClass('bi bi-x-circle mx-1').attr('title', 'Desmarcar audiência').attr('role', 'button').click(abreAviso);
+                $(tabelaLinha).append($('<td />').append(iconeAdiarAud).append(iconeDesmarcarAud));
+                $(tabelaBody).append(tabelaLinha);
+            } else {
+                //constrói linha com vaga
+                $(tabelaLinha).append($('<td />').html(resultadoConsolidado.auds.pautasDoDia[a].tipo.descricao));
+                $(tabelaLinha).append($('<td />').html('V/T'));
+                $(tabelaLinha).append($('<td />').html(resultadoConsolidado.auds.pautasDoDia[a].pautaAudienciaHorario.horaInicial.substring(0, 5)));
+                $(tabelaLinha).append($('<td />').attr('colspan', '6').html('vaga'));
+                // $(tabelaLinha).append($('<td />').text('Obs'));
+                var iconeObservacao = $('<i />').addClass('bi bi-card-text mx-1').attr('title', 'Adicionar observação').attr('role', 'button').click(abreAviso);
+                $(tabelaLinha).append($('<td />').append(iconeObservacao));
+                // $(tabelaLinha).append($('<td />').text('Act'));
+                var iconeAdicionarAud = $('<i />').addClass('bi bi-plus-circle mx-1').attr('title', 'Designar audiência').attr('role', 'button').click(abreAviso);
+                $(tabelaLinha).append($('<td />').append(iconeAdicionarAud));
+                $(tabelaBody).append(tabelaLinha);
+            }
+        }
+        $(tabela).append(tabelaBody);
+    } else {
+        //$(header).append($('<span />').text(' - Não há pautas programadas para este dia.'));
+    }
+    $(container).append(header);
+    $(container).append(tabela);
 
 
 
 
+    // function (auds) {
+    //     console.log(auds);
+    //     if (auds.pautasDoDia.length > 0) {
+    //         console.log('bora construir a tabela');
+    //         var header = $('<div />').addClass('h6 border-bottom').text(objetoData.toLocaleDateString() + ', ' + objetoData.toLocaleString('pt-BR', { weekday: 'long' }));
+    //         var tabela = $('<table />').addClass('table table-striped table-hover align-middle');
+    //         var tabelaHead = $('<thead />');
+    //         $(tabelaHead).append( $('<th />').html('Tipo') );
+    //         $(tabelaHead).append( $('<th />').html('Modalidade') );
+    //         $(tabelaHead).append( $('<th />').html('Horário') );
+    //         $(tabelaHead).append( $('<th />').html('Autos') );
+    //         $(tabelaHead).append( $('<th />').html('Rito') );
+    //         $(tabelaHead).append( $('<th />').html('Autor') );
+    //         $(tabelaHead).append( $('<th />').html('Advogado(s) Autor') );
+    //         $(tabelaHead).append( $('<th />').html('Réu(s)') );
+    //         $(tabelaHead).append( $('<th />').html('Advogado(s) Réu(s)') );
+    //         $(tabelaHead).append( $('<th />').html('Observações') );
+    //         $(tabelaHead).append( $('<th />').html('Ações') );
 
-    // console.log('pegaProcessos do mês ', id, dataCompleta);
-    // var diaInicio = 1;
-    // if (mes === new Date().getMonth()) diaInicio = new Date().getDate();
+    //         var tabelaBody = $('<tbody />');
+    //         for (i=0; i<auds.pautasDoDia.length; i++) {
+    //             var tabelaLinha = $('<tr />');
+    //             $(tabelaLinha).append( $('<td />').html(auds.pautasDoDia[i].tipo.descricao.split(" ")[0]) );
+    //             if (auds.pautasDoDia[i].processo.juizoDigital) $(tabelaLinha).append( $('<td />').html('Vídeo') );
+    //             else $(tabelaLinha).append( $('<td />').html('Presencial') );
+    //             $(tabelaLinha).append( $('<td />').html(auds.pautasDoDia[i].pautaAudienciaHorario.horaInicial.substring(0,5)+'-'+auds.pautasDoDia[i].pautaAudienciaHorario.horaFinal.substring(0,5)) );
+    //             $(tabelaLinha).append( $('<td />').html(auds.pautasDoDia[i].nrProcesso) );
+    //             $(tabelaLinha).append( $('<td />').html(auds.pautasDoDia[i].processo.classeJudicial.sigla) );
+    //             var poloAtivo = $('<td />');
+    //             // for (a=0; a<auds.pautasDoDia[i].poloAtivo.length; a++) {
+    //             //     var poloAtivoNome = $('<span />').text(auds.pautasDoDia[i].poloAtivo[a].nome);
+    //             //     $(poloAtivo).append(poloAtivoNome);
+    //             // }
+    //             $(poloAtivo).text(auds.pautasDoDia[i].poloAtivo.nome);
+    //             $(tabelaLinha).append(poloAtivo);
+    //             $(tabelaLinha).append( $('<td />').html('Ainda não peguei advogados') );
+    //             var poloPassivo = $('<td />');
+    //             // for (a=0; a<auds.pautasDoDia[i].poloPassivo.length; a++) {
+    //             //     var poloPassivoNome = $('<span />').text(auds.pautasDoDia[i].poloPassivo[a].nome);
+    //             //     $(poloPassivo).append(poloPassivoNome);
+    //             // }
+    //             $(poloPassivo).text(auds.pautasDoDia[i].poloPassivo.nome);
+    //             $(tabelaLinha).append(poloPassivo);
+    //             $(tabelaLinha).append( $('<td />').html('Ainda não peguei advogados') );
+    //             $(tabelaLinha).append( $('<td />').text('Obs') );
+    //             $(tabelaLinha).append( $('<td />').text('Act') );
+    //             $(tabelaBody).append(tabelaLinha);
+    //         }
+    //         console.log(tabelaBody);
+    //         $(tabela).append(tabelaHead);
+    //         $(tabela).append(tabelaBody);
 
-    // var ultimoDiaMes = new Date(new Date().setFullYear(ano, mes + 1, 0));
-    // ultimoDiaMes = ultimoDiaMes.getDate();
+    //         $(container).append(header);
+    //         $(container).append(tabela);
+    //     } else
+    //         $(container).text('Não há pautas programadas para este dia.');
+}
 
-    // console.log('hoje ', diaInicio, 'ultimo dia deste mes', ultimoDiaMes);
+function abreAviso() {
+    $('#pauta-modal-content').html('Função ainda não implementada!');
+    $('#pauta-modal-titulo').dialog({
+        title: 'Aviso',
+        buttons: {
+            'Ok': function () {
+                $(this).dialog('close');
+            },
+        },
+    }).dialog('open');
     /*
-
-    <div id="data" class="container-fluid">
-                        <div class="h6 border-bottom">04/08/2022 - quinta feira</div>
-                        <table class="table table-striped table-hover align-middle">
-                            <thead>
-                                <th>Tipo</th>
-                                <th></th>
-                                <th></th>
-                                <th></th>
-                                <th></th>
-                                <th></th>
-                                <th></th>
-                                <th></th>
-                                <th></th>
-                                <th></th>
-                                <th></th>
-                            </thead>
-                            <tbody>
-                            </tbody>
-                        </table>
-                    </div>
-                    
+    $('#aud-aid-alert-container').dialog({
+        title: titulo,
+        buttons: {
+            'Atualizar': function () {
+                location.reload();
+            },
+            'Não agora': function () {
+                $(this).dialog('close');
+            },
+        },
+    }).dialog('open');
     */
 }
 

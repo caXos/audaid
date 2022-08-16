@@ -16,7 +16,7 @@ Click nbfs://nbhost/SystemFileSystem/Templates/ClientSide/css.css to edit this t
 
 .aud-aid-modal {
     background-color: white;
-    background-image: url('./img/calendar-alt-solid-01opacity.png');
+    /* background-image: url('./img/calendar-alt-solid-01opacity.png'); */
     background-size: cover;
     z-index: 99;
     position: absolute;
@@ -128,11 +128,22 @@ br {
     justify-content: space-evenly;
     align-items: flex-end;
     margin-bottom: 5px;
+    margin-top: 5px;
 }
 
-.aud-aid-modal-footer button {
+.aud-aid-modal-footer .aud-aid-button {
     /*    color: red;*/
     cursor: pointer;
+    border-radius: 10px;
+    border: 1px solid black;
+    padding: 4px;
+    font-size: 0.875em;
+    transition: all 0.5s ease;
+}
+.aud-aid-modal-footer .aud-aid-button:hover {
+    /*    color: red;*/
+    background-color: gray;
+    color: white;
 }
 
 .aud-aid-error {
@@ -160,7 +171,7 @@ br {
 
 .aud-aid-gigs-select-container {
     position: absolute;
-    bottom: 30px;
+    bottom: 35px;
     display: flex;
     flex-direction: column;
     justify-content: center;

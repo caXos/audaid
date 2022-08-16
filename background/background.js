@@ -4,17 +4,17 @@
 // 		//Ao instalar a extens�o
 // 		openTerms();
 // 	}else if(details.reason === "update"){		
-		
+
 // 		browser.storage.local.get('concordo', function(result){
 // 			if (!result.concordo) {
 // 				openTerms();
 // 			}
 // 		});
-		
+
 // 	}
 // });
 
-function notificacao(titulo, mensagem){
+function notificacao(titulo, mensagem) {
     // browser.notifications.create('onInstalled', {
     //     title: `Runtime Examples version:`,
     //     message: `${browser.storage.local.get('concordo')}`,
@@ -36,11 +36,22 @@ function openTerms() {
     browser.tabs.create({
         url: browser.runtime.getURL('termos/termos.html'),
         active: true
-     });
-  }
+    });
+}
+
+function openHistory() {
+    // browser.tabs.create({
+    //   url: "https://example.com",
+    //  active: true
+    // });
+    browser.tabs.create({
+        url: browser.runtime.getURL('history/history.html'),
+        active: true
+    });
+}
 
 function handleInstalled(details) {
-    browser.storage.local.get('concordo', function(result){
+    browser.storage.local.get('concordo', function (result) {
         /*
         por algum motivo, neste momento não tem como usar console.log.
         por isso, usar a função notificacao abaixo para ver se a pessoa já concordou com os termos
@@ -50,6 +61,9 @@ function handleInstalled(details) {
 
         if (!result.concordo) {
             openTerms();
+        }
+        if (result.reason === 'update') {
+            openHistory();
         }
     });
 }

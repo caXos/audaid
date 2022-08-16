@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="./history.css" />
+	<link rel="stylesheet" href="./../jquery/jquery-ui/jquery-ui.css" />
+	<title>AudAid - Histórico</title>
+</head>
+
+<body>
+	<div id="aud-aid-history-header">
+		<h1>AudAid - Histórico de Versões</h1>
+	</div>
+	<div id="aud-aid-history-content">
+		<div>
+			<h3>Data: 02/08/2022</h3>
+			<p>Versão: 0.4</p>
+			<p>Funcionalidades:</p>
+			<ol>
+				<li>Para os casos de Juízo 100% Digital, NÃO é preciso tirar o 100% digital antes de marcar
+					audiências de julgamento</li>
+				<li>Ao invés de escolher em uma lista de 27 tipos possíveis de audiência, é necessário
+					escolher só entre 7, e ir preenchendo algumas opções (por exemplo, se é por
+					videoconferência)</li>
+				<li>Processos 100% digital já vem com a opção de realizar a audiência por videoconferência
+					pré-selecionada.</li>
+				<li>Não é preciso ficar trocando de abas, ou páginas do PJe, para marcar as audiências.</li>
+				<li>Caso já haja audiência designada para o processo que se deseja redesignar, NÃO é preciso
+					cancelar a existente para marcar a nova, a extensão já faz isso.</li>
+			</ol>
+			<p>Bugs conhecidos e desvantagens:</p>
+			<ol>
+				<li>Ainda não existe filtro de data e hora para marcar audiência (ou seja, é possível marcar audiências
+					em sábados, domingos, feriados, desde as 0h até às 23h59)</li>
+				<li>Caso você esteja designando audiência de um processo para um dia e hora em que já existe audiência
+					de OUTRO processo, a extensão ficará travada, mostrando mensagem de que foi designada com sucesso,
+					quando na verdade não foi.</li>
+				<li>GIGS por enquanto saem automaticamente com prazo de 2 dias úteis</li>
+				<li>Não é preciso ficar trocando de abas, ou páginas do PJe, para marcar as audiências.</li>
+				<li>Apesar de ser permitido digitar texto personalizado para a atividade GIGS, ainda não é possível
+					criação de mais mensagens recorrentes padrão.</li>
+				<li>Ao designar audiência de conciliação, caso clicar na opção “Semana da Conciliação” ou “Semana da
+					Execução”, não é possível tirar ambas, sendo necessário atualizar a página caso se deseje marcar
+					audiência de conciliação de pauta normal.</li>
+			</ol>
+		</div>
+		<div>
+			<h3>Data: 15/08/2022</h3>
+			<p>Versão: 0.6</p>
+			<p>Atualizações e correções</p>
+			<ol>
+				<li>Resolvido falha que não colocava @ no GIGS do RJ1</li>
+				<li>Retirada imagem de fundo, para deixar mais limpa a visualização</li>
+				<li>Primeiro teste de atualização automática</li>
+				<li>Arrumadas caixas de seleção das Semana de Conciliação e Semana de Execução: agora é possível desmarcar ambas, sem necessidade de recarregar a página</li>
+			</ol>
+			<p>Bugs conhecidos e desvantagens:</p>
+			<ol>
+				<li>Nenhum bug ou problema novo encontrado</li>
+			</ol>
+		</div>
+	</div>
+	<script type="text/javascript" src="./../jquery/core/jquery.js"></script>
+	<script type="text/javascript" src="./history.js"></script>
+	<script type="text/javascript" src="./../jquery/jquery-ui/jquery-ui.js"></script>
+</body>
+
+</html>

@@ -69,12 +69,14 @@ function getUrlToOpen(suffix) {
     return urlParaAbrir;
 }
 
-function openSchedule() {
+
+function openPjeSchedule() {
     var urlParaAbrir = getUrlToOpen('pjekz/pauta-audiencias');
     const win = window.open(urlParaAbrir, '_blank');
 }
 
-function openAlert(titulo, mensagem) {
+function openAudAidAlert(titulo, mensagem) {
+    console.log(titulo, mensagem);
     $('#aud-aid-alert-message').text(mensagem);
     $('#aud-aid-alert-container').dialog({
         title: titulo,
@@ -115,6 +117,28 @@ function openRebookConfirm(titulo, mensagem, id) {
             },
         },
     }).dialog('open');
+}
+
+
+function openAudAidSchedule() {
+    //browser.runtime.getURL('termos/termos.html'),
+    // var urlParaAbrir = browser.runtime.getURL('pauta/pauta.html');
+    // urlParaAbrir = urlParaAbrir.toString();
+    // if (debugLevel >= 3) console.log("AudAid - URL da Pauta", urlParaAbrir, new Date());
+    // let openSchedule = browser.tabs.create({
+    //     url: urlParaAbrir,
+    //     active: true
+    // });
+    // openSchedule.then(function (aba) {
+    //     console.log(aba);
+    // }, function (erro) {
+    //     console.log('erro ao abrir aba: ', erro);
+    // });
+    // const win = window.open(urlParaAbrir, '_self');
+    var titulo = 'Função ainda não implementada';
+    var texto = 'Use o menu de opções para acessar a pauta';
+    // openAudAidAlert(titulo, texto);
+    alert(titulo + '\n' + texto);
 }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /*
@@ -230,21 +254,20 @@ async function buildModal() {
 
     var specialWeeksFormContainer = $('<div />').attr('id', 'aud-aid-special-weeks-form-container');
     var specialWeeksForm = $('<form />').attr('id', 'aud-aid-special-weeks-form');
-    var agreementWeekRadioContainer = $('<div />').attr('id', 'aud-aid-agreement-week-radio-container');
-    var agreementWeekRadioLabel = $('<label />').attr('for', 'aud-aid-agreement-week-radio').html('Semana da Conciliação?');
-    var agreementWeekRadio = $('<input />').attr('type', 'radio').attr('id', 'aud-aid-agreement-week-radio').attr('name', 'special-weeks').change(buildSuggestion);
-    $(agreementWeekRadioContainer).append(agreementWeekRadioLabel);
-    $(agreementWeekRadioContainer).append(agreementWeekRadio);
+    var agreementWeekCheckboxContainer = $('<div />').attr('id', 'aud-aid-agreement-week-checkbox-container');
+    var agreementWeekCheckboxLabel = $('<label />').attr('for', 'aud-aid-agreement-week-checkbox').html('Semana da Conciliação?');
+    var agreementWeekCheckbox = $('<input />').attr('type', 'checkbox').attr('id', 'aud-aid-agreement-week-checkbox').attr('name', 'special-weeks').change(buildSuggestion).click({ week: 'agreement' }, verifyOtherCheckbox);
+    $(agreementWeekCheckboxContainer).append(agreementWeekCheckboxLabel);
+    $(agreementWeekCheckboxContainer).append(agreementWeekCheckbox);
 
-    var executionWeekRadioContainer = $('<div />').attr('id', 'aud-aid-execution-week-radio-container');
-    var executionWeekRadioLabel = $('<label />').attr('for', 'aud-aid-execution-week-radio').html('Semana da Execução?');
-    var executionWeekRadio = $('<input />').attr('type', 'radio').attr('id', 'aud-aid-execution-week-radio').attr('name', 'special-weeks').change(buildSuggestion);
+    var executionWeekCheckboxContainer = $('<div />').attr('id', 'aud-aid-execution-week-checkbox-container');
+    var executionWeekCheckboxLabel = $('<label />').attr('for', 'aud-aid-execution-week-checkbox').html('Semana da Execução?');
+    var executionWeekCheckbox = $('<input />').attr('type', 'checkbox').attr('id', 'aud-aid-execution-week-checkbox').attr('name', 'special-weeks').change(buildSuggestion).click({ week: 'execution' }, verifyOtherCheckbox);
+    $(executionWeekCheckboxContainer).append(executionWeekCheckboxLabel);
+    $(executionWeekCheckboxContainer).append(executionWeekCheckbox);
 
-    $(executionWeekRadioContainer).append(executionWeekRadioLabel);
-    $(executionWeekRadioContainer).append(executionWeekRadio);
-
-    $(specialWeeksForm).append(agreementWeekRadioContainer);
-    $(specialWeeksForm).append(executionWeekRadioContainer);
+    $(specialWeeksForm).append(agreementWeekCheckboxContainer);
+    $(specialWeeksForm).append(executionWeekCheckboxContainer);
     $(specialWeeksFormContainer).append(specialWeeksForm).hide();
 
     $(inputsContainer).append(videoCallContainer);
@@ -278,12 +301,14 @@ async function buildModal() {
 
     //Modal Footer
     var modalFooter = $('<div />').addClass('aud-aid-modal-footer');
-    var closeButton = $('<button />').text('Fechar').click(false, toggleModal);
-    var openScheduleButton = $('<button />').text('Abrir Pauta').click(openSchedule);
-    var scheduleButton = $('<button />').text('Designar').click(validateBookHearing);
+    var closeButton = $('<div />').text('Fechar').addClass('aud-aid-button').click(false, toggleModal);
+    var openPJeScheduleButton = $('<div />').text('Pauta PJe').addClass('aud-aid-button').click(openPjeSchedule);
+    var openAudAidScheduleButton = $('<div />').text('Pauta AudAid').addClass('aud-aid-button').click(openAudAidSchedule);
+    var scheduleButton = $('<div />').text('Designar').addClass('aud-aid-button').click(validateBookHearing);
 
     $(modalFooter).append(closeButton);
-    $(modalFooter).append(openScheduleButton);
+    $(modalFooter).append(openPJeScheduleButton);
+    $(modalFooter).append(openAudAidScheduleButton);
     $(modalFooter).append(scheduleButton);
 
     $(modalContainer).append(modalHeader);
@@ -351,12 +376,29 @@ function changeSuggestedHearingType(evt) {
     else $('#aud-aid-videocall-container').hide();
 }
 
+function verifyOtherCheckbox(evt) {
+    var kindOfWeek = evt.data.week;
+    if (kindOfWeek === 'agreement') {
+        if ($('#aud-aid-agreement-week-checkbox:checked') && $('#aud-aid-execution-week-checkbox:checked')) {
+            $('#aud-aid-execution-week-checkbox').prop('checked', false);
+        }
+    }
+    else if (kindOfWeek === 'execution') {
+        if ($('#aud-aid-agreement-week-checkbox:checked') && $('#aud-aid-execution-week-checkbox:checked')) {
+            $('#aud-aid-agreement-week-checkbox').prop('checked', false);
+        }
+    }
+    // aud-aid-agreement-week-checkbox
+    // aud-aid-execution-week-checkbox
+
+}
+
 function buildSuggestion() {
     var tipo = $('#aud-aid-hearing-type-select').val();
     var type = '';
     var video = $('#aud-aid-video-call-checkbox')[0].checked;
-    var agreementWeek = $('#aud-aid-agreement-week-radio')[0].checked;
-    var executionWeek = $('#aud-aid-execution-week-radio')[0].checked;
+    var agreementWeek = $('#aud-aid-agreement-week-checkbox')[0].checked;
+    var executionWeek = $('#aud-aid-execution-week-checkbox')[0].checked;
     var phase = processo.labelFaseProcessual;
     var style = 'aud-aid-color-standard';
     var needRite = false;
@@ -430,36 +472,50 @@ function buildSuggestion() {
 
 async function validateBookHearing() {
     var errorCounter = 0;
+    var errorString = [];
     //CourtRoom
     if ($('#aud-aid-court-room-select').val() === null || $('#aud-aid-court-room-select').val() === undefined) {
         $('#aud-aid-court-room-select').addClass('aud-aid-error');
         if (debugLevel >= 2) console.log("AudAid - Erro! Sala de Audiências não preenchida corretamente.", new Date());
         errorCounter++;
+        errorString.push('Sala de Audiências não preenchida corretamente');
     } else $('#aud-aid-court-room-select').addClass('aud-aid-success');
     //Date
     if ($('#aud-aid-date-input').val() === null || $('#aud-aid-date-input').val() === undefined || $('#aud-aid-date-input').val() === '') {
         $('#aud-aid-date-input').addClass('aud-aid-error');
         if (debugLevel >= 2) console.log("AudAid - Erro! Data não preenchida corretamente.", new Date());
         errorCounter++;
+        errorString.push('Data não preenchida corretamente');
     } else $('#aud-aid-date-input').addClass('aud-aid-success');
     //Time
     if ($('#aud-aid-time-input').val() === null || $('#aud-aid-time-input').val() === undefined || $('#aud-aid-time-input').val() === '') {
         $('#aud-aid-time-input').addClass('aud-aid-error');
         if (debugLevel >= 2) console.log("AudAid - Erro! Hora não preenchida corretamente.", new Date());
         errorCounter++;
+        errorString.push('Hora não preenchida corretamente');
     } else $('#aud-aid-time-input').addClass('aud-aid-success');
     //Type
     if ($('#aud-aid-hearing-type-select').val() === null || $('#aud-aid-hearing-type-select').val() === undefined) {
         $('#aud-aid-hearing-type-select').addClass('aud-aid-error');
         if (debugLevel >= 2) console.log("AudAid - Erro! Tipo não preenchido corretamente.", new Date());
         errorCounter++;
+        errorString.push('Tipo não preenchido corretamente');
     } else $('#aud-aid-hearing-type-select').addClass('aud-aid-success');
 
     if (errorCounter === 0) {
         if (debugLevel >= 2) console.log("AudAid - Audiência validada! Vou preparar o JSON.", new Date());
         checkAlreadyBookedHearing();
     } else {
-        alert('Há erros no formulário!');
+        // alert('Há erros no formulário!');
+        var mensagem = '';
+        errorString.forEach(function(erro, index) {
+            mensagem += (index+1);
+            mensagem += ': ';
+            mensagem += erro;
+            mensagem += '\n';
+        });
+        if (debugLevel >= 2) console.log("AudAid - Erro!", mensagem, new Date());
+        openAudAidAlert('Formulário com erros', mensagem);
     }
 }
 
@@ -480,7 +536,7 @@ async function checkAlreadyBookedHearing() {
     var alreadyBookedHearing = await getAlreadyBookedHearingId();
     console.log(alreadyBookedHearing);
     if (alreadyBookedHearing != null && alreadyBookedHearing != undefined) {
-        openRebookConfirm('Redesignação','Este processo já tinha audiência designada',alreadyBookedHearing.id);
+        openRebookConfirm('Redesignação', 'Este processo já tinha audiência designada', alreadyBookedHearing.id);
     } else {
         prepareBookPayload();
     }
@@ -491,8 +547,8 @@ async function prepareBookPayload() {
     var tipo = $('#aud-aid-hearing-type-select').val();
     var idTipo = null;
     var videoChecked = $('#aud-aid-video-call-checkbox')[0].checked;
-    var agreementChecked = $('#aud-aid-agreement-week-radio')[0].checked;
-    var executionChecked = $('#aud-aid-execution-week-radio')[0].checked;
+    var agreementChecked = $('#aud-aid-agreement-week-checkbox')[0].checked;
+    var executionChecked = $('#aud-aid-execution-week-checkbox')[0].checked;
     var phase = processo.labelFaseProcessual;
 
     if (videoChecked === null || videoChecked === undefined) videoChecked = false;
@@ -766,7 +822,7 @@ async function sendBookHearingPostRequest(payload) {
                 openReloadConfirm('Sucesso!', 'Audiência designada com sucesso!\nAtualize a página para ver as alterações');
             }
         } else {
-            openAlert('Erro!', JSON.stringify(responseJson.mensagem));
+            openAudAidAlert('Erro!', JSON.stringify(responseJson.mensagem));
         }
     }
     novoxhr.send(JSON.stringify(payload));
@@ -820,7 +876,7 @@ async function sendCreateGigsPostRequest(payload) {
         if (responseJson.usuarioCriacao !== null) {
             openReloadConfirm('Sucesso', 'Audiência e GIGS criados com sucesso!\nAtualize a página para ver as alterações');
         } else {
-            openAlert('Erro', JSON.stringify(responseJson));
+            openAudAidAlert('Erro', JSON.stringify(responseJson));
         }
     }
     novoxhr.send(JSON.stringify(payload));
