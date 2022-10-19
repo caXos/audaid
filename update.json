@@ -1,0 +1,44 @@
+{
+    "addons": {
+      "{1cdadb01-6336-4ca3-87e6-4f44ba1b1c1d}": {
+        "updates": [
+        {
+            "version": "0.1",
+            "update_link": "https://addons.mozilla.org/firefox/downloads/file/3971230/a38178c3ef7c40a49e91-0.1.xpi"
+        },
+        {
+            "version": "0.2",
+            "update_link": "https://addons.mozilla.org/firefox/downloads/file/3981168/a38178c3ef7c40a49e91-0.2.xpi"
+        },
+        {
+            "version": "0.3",
+            "update_link": "https://addons.mozilla.org/firefox/downloads/file/3981615/a38178c3ef7c40a49e91-0.3.xpi"
+        },
+        {
+            "version": "0.4",
+            "update_link": "https://addons.mozilla.org/firefox/downloads/file/3983368/a38178c3ef7c40a49e91-0.4.xpi"
+        },
+        {
+            "version": "0.5",
+            "update_link": "https://addons.mozilla.org/firefox/downloads/file/3984630/a38178c3ef7c40a49e91-0.5.xpi"
+        },
+        {
+            "version": "0.6",
+            "update_link": "https://addons.mozilla.org/firefox/downloads/file/3989093/a38178c3ef7c40a49e91-0.6.xpi"
+        },
+        {
+            "version": "0.7",
+            "update_link": "https://addons.mozilla.org/firefox/downloads/file/3992893/a38178c3ef7c40a49e91-0.7.xpi"
+        },
+        {
+            "version": "0.8",
+            "update_link": "https://addons.mozilla.org/firefox/downloads/file/4014732/a38178c3ef7c40a49e91-0.8.xpi"
+        },
+        {
+            "version": "0.9",
+            "update_link": ""
+        }
+        ]
+      }
+    }
+  }
