@@ -37,6 +37,10 @@
         {
             "version": "0.9",
             "update_link": "https://addons.mozilla.org/firefox/downloads/file/4018107/a38178c3ef7c40a49e91-0.9.xpi"
+        },
+        {
+            "version": "1.0",
+            "update_link": "https://addons.mozilla.org/firefox/downloads/file/4019224/a38178c3ef7c40a49e91-1.0.xpi"
         }
         ]
       }
