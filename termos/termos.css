@@ -64,3 +64,9 @@ Estilos da tela de Termos e Condições
     justify-content: center;
     margin: 5px 0;
 }
+
+.link {
+    color: blue;
+    cursor: pointer;
+    text-decoration: underline;
+}

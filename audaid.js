@@ -6,6 +6,7 @@ var salas = null;
 var idSalaFisica = null;
 var debugLevel = null;
 var audAidAgreement = null;
+var tribunal = null;
 
 /*
 Funções de utilidade geral
@@ -17,6 +18,8 @@ async function audAidStart() {
         if (debugLevel > 0) console.log("AudAid - Nível de Debug", debugLevel, new Date());
     });
 
+    tribunal = window.location.href.toString().substring(window.location.href.toString().search("trt"), window.location.href.toString().search("trt")+5).replace(".","")
+
     let getAgreement = browser.storage.local.get('audAidConcordo');
     getAgreement.then(gotAgreement, didNotGetAgreement);
 }
@@ -24,6 +27,7 @@ async function audAidStart() {
 async function gotAgreement(termos) {
     if (debugLevel >= 3) console.log('gotAGreement');
     if (termos.audAidConcordo) {
+        getUrlToOpen('pje-comum-api/api/processos/id/')
         if (debugLevel >= 3) console.log("AudAid - Carregado. Limpando...", new Date());
 
         //Fecha a modal, se estiver aberta (em caso de recarregar a página)
@@ -31,7 +35,9 @@ async function gotAgreement(termos) {
 
         //Remove o botão para abrir a modal
         $('#aud-aid-open-modal-button').remove();
+        $('#aud-aid-open-initial-sorting-modal-button').remove();
         $('#aud-aid-modal').remove();
+        $('#aud-aid-initial-sorting-modal').remove();        
         $('#aud-aid-modal-overlay').remove();
         $('#aud-aid-alert-container').remove();
 
@@ -45,9 +51,17 @@ async function gotAgreement(termos) {
             salas = await getRoomIds();
             await buildModal();
 
+            // let assuntos = await pegaAssuntos();
+
+            // buildInitialSortingModal(assuntos);
+
             if (debugLevel >= 3) console.log("AudAid - Modal criada! Criando botão...", new Date());
-            var buttonTemplate = $('<i />').addClass('fas fa-calendar-check aud-aid-icon').attr('id', 'aud-aid-open-modal-button').click(true, toggleModal);
-            $('body').append(buttonTemplate);
+            var buttonContainer = $('<div />').attr('id','aud-aid-button-container');
+            var bookHearingIcon = $('<i />').addClass('fas fa-calendar-check aud-aid-icon2').attr('id', 'aud-aid-open-modal-button').click(true, toggleModal);
+            // var initialSortingIcon = $('<i />').addClass('fas fa-calendar-check aud-aid-icon2').attr('id', 'aud-aid-open-initial-sorting-modal-button').click(true, toggleInitialSortingModal);
+            // $(buttonContainer).append(bookHearingIcon).append(initialSortingIcon);
+            $(buttonContainer).append(bookHearingIcon);
+            $('body').append(buttonContainer);
             if (debugLevel >= 3) console.log("AudAid - Botão criado e anexado à página! Pronto para uso!", new Date());
         }
     } else {
@@ -61,11 +75,15 @@ async function didNotGetAgreement(error) {
 
 function getUrlToOpen(suffix) {
     if (suffix === null || suffix === undefined) suffix = '';
-    var urlAtual = window.location.href.toString();
+    // var urlAtual = window.location.href.toString();
+    //window.location.href.toString().substring(window.location.href.toString().search("trt"), window.location.href.toString().search("trt")+5).slice(0,-1)
     var urlParaAbrir = '';
-    if (urlAtual.includes("homologacao")) urlParaAbrir = 'https://pje-homologacao.trt9.jus.br/' + suffix;
-    else if (urlAtual.includes("treinamento")) urlParaAbrir = 'https://pje-treinamento.trt9.jus.br/' + suffix;
-    else urlParaAbrir = 'https://pje.trt9.jus.br/' + suffix;
+    // var tribunal = urlAtual.substring(urlAtual.search("trt"),urlAtual.search("trt")+5)
+    // var tribunal = window.location.href.toString().substring(window.location.href.toString().search("trt"), window.location.href.toString().search("trt")+5).replace(".","")
+    if (urlAtual.includes("homologacao")) urlParaAbrir = 'https://pje-homologacao.'+tribunal+'.jus.br/' + suffix;
+    else if (urlAtual.includes("treinamento")) urlParaAbrir = 'https://pje-treinamento.'+tribunal+'.jus.br/' + suffix;
+    else urlParaAbrir = 'https://pje.'+tribunal+'.jus.br/' + suffix;
+    // console.log(urlParaAbrir)
     return urlParaAbrir;
 }
 
@@ -137,7 +155,7 @@ function openAudAidSchedule() {
     // const win = window.open(urlParaAbrir, '_self');
     var titulo = 'Função ainda não implementada';
     var texto = 'Use o menu de opções para acessar a pauta';
-    // openAudAidAlert(titulo, texto);
+    // // openAudAidAlert(titulo, texto);
     alert(titulo + '\n' + texto);
 }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -152,7 +170,7 @@ async function getHearingTypes() {
 }
 
 async function getProcessData() {
-    var urlParaAbrir = getUrlToOpen('pje-comum-api/api/processos/id/' + idProcesso);
+    let urlParaAbrir = getUrlToOpen('pje-comum-api/api/processos/id/' + idProcesso);
     let resposta = await fetch(urlParaAbrir);
     let dados = await resposta.json();
     return dados;
@@ -317,7 +335,7 @@ async function buildModal() {
 
     $("body").append(modalContainer);
 
-    var modalOverlay = $('<div />').addClass('aud-aid-modal-overlay').attr('id', 'aud-aid-modal-overlay').click(false, toggleModal).hide();
+    var modalOverlay = $('<div />').addClass('aud-aid-modal-overlay').attr('id', 'aud-aid-modal-overlay').click(false, toggleModal).click(false, toggleInitialSortingModal).hide();
     $("body").append(modalOverlay);
 
     if (processo.juizoDigital) $('#aud-aid-video-call-checkbox').attr('checked', 'checked').trigger('change');
@@ -723,23 +741,25 @@ async function sendCancelHearingPatchRequest(payload) {
     var urlOrigin = '';
     var urlReferer = '';
     var responseJson = '';
+    // var tribunal = urlAtual.substring(urlAtual.search("trt"),urlAtual.search("trt")+5).replace('.','')
+    
     if (urlAtual.includes("homologacao")) {
-        urlParaAbrir = 'https://pje-homologacao.trt9.jus.br/pje-comum-api/api/pautasaudiencias/audiencias/cancelamento';
-        urlHost = 'pje-homologacao.trt9.jus.br';
-        urlOrigin = 'https://pje-homologacao.trt9.jus.br';
-        urlReferer = 'https://pje-homologacao.trt9.jus.br/pjekz/processo/' + idProcesso + '/detalhe';
+        urlParaAbrir = 'https://pje-homologacao.'+tribunal+'.jus.br/pje-comum-api/api/pautasaudiencias/audiencias/cancelamento';
+        urlHost = 'pje-homologacao.'+tribunal+'.jus.br';
+        urlOrigin = 'https://pje-homologacao.'+tribunal+'.jus.br';
+        urlReferer = 'https://pje-homologacao.'+tribunal+'.jus.br/pjekz/processo/' + idProcesso + '/detalhe';
     }
     else if (urlAtual.includes("treinamento")) {
-        urlParaAbrir = 'https://pje-treinamento.trt9.jus.br/pje-comum-api/api/pautasaudiencias/audiencias/cancelamento';
-        urlHost = 'pje-treinamento.trt9.jus.br';
-        urlOrigin = 'https://pje-treinamento.trt9.jus.br';
-        urlReferer = 'https://pje-treinamento.trt9.jus.br/pjekz/processo/' + idProcesso + '/detalhe';
+        urlParaAbrir = 'https://pje-treinamento.'+tribunal+'.jus.br/pje-comum-api/api/pautasaudiencias/audiencias/cancelamento';
+        urlHost = 'pje-treinamento.'+tribunal+'.jus.br';
+        urlOrigin = 'https://pje-treinamento.'+tribunal+'.jus.br';
+        urlReferer = 'https://pje-treinamento.'+tribunal+'.jus.br/pjekz/processo/' + idProcesso + '/detalhe';
     }
     else {
-        urlParaAbrir = 'https://pje.trt9.jus.br/pje-comum-api/api/pautasaudiencias/audiencias/cancelamento';
-        urlHost = 'pje.trt9.jus.br';
-        urlOrigin = 'https://pje.trt9.jus.br';
-        urlReferer = 'https://pje.trt9.jus.br/pjekz/processo/' + idProcesso + '/detalhe';
+        urlParaAbrir = 'https://pje.'+tribunal+'.jus.br/pje-comum-api/api/pautasaudiencias/audiencias/cancelamento';
+        urlHost = 'pje.'+tribunal+'.jus.br';
+        urlOrigin = 'https://pje.'+tribunal+'.jus.br';
+        urlReferer = 'https://pje.'+tribunal+'.jus.br/pjekz/processo/' + idProcesso + '/detalhe';
     }
     //Faz requisiçao PATCH para cancelar a audiência que já estava designada
     let novoxhr = new XMLHttpRequest();
@@ -776,23 +796,25 @@ async function sendBookHearingPostRequest(payload) {
     var urlOrigin = '';
     var urlReferer = '';
     var responseJson = '';
+    // var tribunal = urlAtual.substring(urlAtual.search("trt"),urlAtual.search("trt")+5).replace('.','')
+    
     if (urlAtual.includes("homologacao")) {
-        urlParaAbrir = 'https://pje-homologacao.trt9.jus.br/pje-comum-api/api/pautasaudiencias/audiencias';
-        urlHost = 'pje-homologacao.trt9.jus.br';
-        urlOrigin = 'https://pje-homologacao.trt9.jus.br';
-        urlReferer = 'https://pje-homologacao.trt9.jus.br/pjekz/pauta-audiencias';
+        urlParaAbrir = 'https://pje-homologacao.'+tribunal+'.jus.br/pje-comum-api/api/pautasaudiencias/audiencias';
+        urlHost = 'pje-homologacao.'+tribunal+'.jus.br';
+        urlOrigin = 'https://pje-homologacao.'+tribunal+'.jus.br';
+        urlReferer = 'https://pje-homologacao.'+tribunal+'.jus.br/pjekz/pauta-audiencias';
     }
     else if (urlAtual.includes("treinamento")) {
-        urlParaAbrir = 'https://pje-treinamento.trt9.jus.br/pje-comum-api/api/pautasaudiencias/audiencias';
-        urlHost = 'pje-treinamento.trt9.jus.br';
-        urlOrigin = 'https://pje-treinamento.trt9.jus.br';
-        urlReferer = 'https://pje-treinamento.trt9.jus.br/pjekz/pauta-audiencias';
+        urlParaAbrir = 'https://pje-treinamento.'+tribunal+'.jus.br/pje-comum-api/api/pautasaudiencias/audiencias';
+        urlHost = 'pje-treinamento.'+tribunal+'.jus.br';
+        urlOrigin = 'https://pje-treinamento.'+tribunal+'.jus.br';
+        urlReferer = 'https://pje-treinamento.'+tribunal+'.jus.br/pjekz/pauta-audiencias';
     }
     else {
-        urlParaAbrir = 'https://pje.trt9.jus.br/pje-comum-api/api/pautasaudiencias/audiencias';
-        urlHost = 'pje.trt9.jus.br';
-        urlOrigin = 'https://pje.trt9.jus.br';
-        urlReferer = 'https://pje.trt9.jus.br/pjekz/pauta-audiencias';
+        urlParaAbrir = 'https://pje.'+tribunal+'.jus.br/pje-comum-api/api/pautasaudiencias/audiencias';
+        urlHost = 'pje.'+tribunal+'.jus.br';
+        urlOrigin = 'https://pje.'+tribunal+'.jus.br';
+        urlReferer = 'https://pje.'+tribunal+'.jus.br/pjekz/pauta-audiencias';
     }
     //Faz requisiçao POST para gravar a audiência
     let novoxhr = new XMLHttpRequest();
@@ -829,29 +851,109 @@ async function sendBookHearingPostRequest(payload) {
     if (debugLevel >= 3) console.log("AudAid - XHR de Designar", novoxhr, new Date());
 }
 
+async function sendBookHearingPostRequest2(payload) {
+    var urlParaAbrir = '';
+    var urlHost = '';
+    var urlOrigin = '';
+    var urlReferer = '';
+    var responseJson = '';
+    // var tribunal = urlAtual.substring(urlAtual.search("trt"),urlAtual.search("trt")+5).replace('.','')
+    
+    if (urlAtual.includes("homologacao")) {
+        urlParaAbrir = 'https://pje-homologacao.'+tribunal+'.jus.br/pje-comum-api/api/pautasaudiencias/audiencias';
+        urlHost = 'pje-homologacao.'+tribunal+'.jus.br';
+        urlOrigin = 'https://pje-homologacao.'+tribunal+'.jus.br';
+        urlReferer = 'https://pje-homologacao.'+tribunal+'.jus.br/pjekz/pauta-audiencias';
+    }
+    else if (urlAtual.includes("treinamento")) {
+        urlParaAbrir = 'https://pje-treinamento.'+tribunal+'.jus.br/pje-comum-api/api/pautasaudiencias/audiencias';
+        urlHost = 'pje-treinamento.'+tribunal+'.jus.br';
+        urlOrigin = 'https://pje-treinamento.'+tribunal+'.jus.br';
+        urlReferer = 'https://pje-treinamento.'+tribunal+'.jus.br/pjekz/pauta-audiencias';
+    }
+    else {
+        urlParaAbrir = 'https://pje.'+tribunal+'.jus.br/pje-comum-api/api/pautasaudiencias/audiencias';
+        urlHost = 'pje.'+tribunal+'.jus.br';
+        urlOrigin = 'https://pje.'+tribunal+'.jus.br';
+        urlReferer = 'https://pje.'+tribunal+'.jus.br/pjekz/pauta-audiencias';
+    }
+    //Faz requisiçao POST para gravar a audiência
+
+
+    let options = {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept-Language': 'pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3',
+            'Connection': 'keep-alive',
+            'Content-Length': new TextEncoder().encode(JSON.stringify(payload)).length,
+            'Content-type': 'application/json',
+            'Cookie': document.cookie,
+            'Host': urlHost,
+            'Origin': urlOrigin,
+            'Referer': urlReferer,
+            'TE': 'Trailers',
+            'User-Agent': window.navigator.userAgent,
+            'X-XSRF-TOKEN': document.cookie.substr(document.cookie.search('Xsrf-Token='), 111).split('=')[1],
+        },
+        body: JSON.stringify(payload),
+        mode: 'cors',
+        credentials: 'include',
+        referrer: urlReferer,
+        referrerPolicy: 'no-referrer-when-downgrade'
+    }
+
+    fetch(urlParaAbrir)
+        // .then((response) => {
+        //     response.json()
+        // }).then((data) {
+        //     console.log(data)
+        // })
+        .then (function (response) {
+            if (debugLevel >= 3) console.log("AudAid - Book JSON response", JSON.parse(novoxhr.responseText));
+            responseJson = JSON.parse(response);
+            if (responseJson.status === "Designada") {
+                var temGigs = checkGigs();
+                if (debugLevel >= 3) console.log("AudAid - CheckGIGS", temGigs, new Date());
+                if (temGigs) prepareGigsPayload();
+                else {
+                    if (debugLevel >= 3) console.log("AudAid - Não precisou marcar GIGS. Finalizando...", new Date());
+                    openReloadConfirm('Sucesso!', 'Audiência designada com sucesso!\nAtualize a página para ver as alterações');
+                }
+            } else {
+                openAudAidAlert('Erro!', JSON.stringify(responseJson.mensagem));
+            }
+        })
+        
+    if (debugLevel >= 3) console.log("AudAid - XHR de Designar", novoxhr, new Date());
+}
+
 async function sendCreateGigsPostRequest(payload) {
     var urlParaAbrir = '';
     var urlHost = '';
     var urlOrigin = '';
     var urlReferer = '';
     var responseJson = '';
+    // var tribunal = urlAtual.substring(urlAtual.search("trt"),urlAtual.search("trt")+5).replace('.','')
+    
     if (urlAtual.includes("homologacao")) {
-        urlParaAbrir = 'https://pje-homologacao.trt9.jus.br/pje-gigs-api/api/atividade';
-        urlHost = 'pje-homologacao.trt9.jus.br';
-        urlOrigin = 'https://pje-homologacao.trt9.jus.br';
-        urlReferer = 'https://pje-homologacao.trt9.jus.br/pjekz/processo/' + idProcesso + '/detalhe';
+        urlParaAbrir = 'https://pje-homologacao.'+tribunal+'.jus.br/pje-gigs-api/api/atividade';
+        urlHost = 'pje-homologacao.'+tribunal+'.jus.br';
+        urlOrigin = 'https://pje-homologacao.'+tribunal+'.jus.br';
+        urlReferer = 'https://pje-homologacao.'+tribunal+'.jus.br/pjekz/processo/' + idProcesso + '/detalhe';
     }
     else if (urlAtual.includes("treinamento")) {
-        urlParaAbrir = 'https://pje-treinamento.trt9.jus.br/pje-gigs-api/api/atividade';
-        urlHost = 'pje-treinamento.trt9.jus.br';
-        urlOrigin = 'https://pje-treinamento.trt9.jus.br';
-        urlReferer = 'https://pje-treinamento.trt9.jus.br/pjekz/processo/' + idProcesso + '/detalhe';
+        urlParaAbrir = 'https://pje-treinamento.'+tribunal+'.jus.br/pje-gigs-api/api/atividade';
+        urlHost = 'pje-treinamento.'+tribunal+'.jus.br';
+        urlOrigin = 'https://pje-treinamento.'+tribunal+'.jus.br';
+        urlReferer = 'https://pje-treinamento.'+tribunal+'.jus.br/pjekz/processo/' + idProcesso + '/detalhe';
     }
     else {
-        urlParaAbrir = 'https://pje.trt9.jus.br/pje-gigs-api/api/atividade';
-        urlHost = 'pje.trt9.jus.br';
-        urlOrigin = 'https://pje.trt9.jus.br';
-        urlReferer = 'https://pje.trt9.jus.br/pjekz/processo/' + idProcesso + '/detalhe';
+        urlParaAbrir = 'https://pje.'+tribunal+'.jus.br/pje-gigs-api/api/atividade';
+        urlHost = 'pje.'+tribunal+'.jus.br';
+        urlOrigin = 'https://pje.'+tribunal+'.jus.br';
+        urlReferer = 'https://pje.'+tribunal+'.jus.br/pjekz/processo/' + idProcesso + '/detalhe';
     }
     //Faz requisiçao POST para criar GIGS
     let novoxhr = new XMLHttpRequest();
@@ -882,3 +984,73 @@ async function sendCreateGigsPostRequest(payload) {
     novoxhr.send(JSON.stringify(payload));
     if (debugLevel >= 3) console.log("AudAid - XHR de Create GIGS", novoxhr, new Date());
 }
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//AUXÍLIO NA TRIAGEM INICIAL
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+async function pegaAssuntos() {
+    var urlParaAbrir = getUrlToOpen('pje-comum-api/api/processos/id/' + idProcesso + '/assuntos');
+    let resposta = await fetch(urlParaAbrir);
+    let dados = await resposta.json();
+    // console.log("assuntos", dados);
+    return dados;
+    
+}
+
+function buildInitialSortingModal(assuntos) {
+    var modalContainer = $('<div />').addClass('aud-aid-modal aud-aid-modal-shrinked').attr('id', 'aud-aid-initial-sorting-modal').hide();
+    var listaAssuntos = $('<ul />').attr('id','aud-aid-initial-sorting-subjects-list');
+    console.log(listaAssuntos);
+    for (i=0; i< assuntos.length; i++) {
+        console.log(assuntos[i].assunto.descricao);
+        var listaAssunto = $('<li />').text(assuntos[i].assunto.descricao);
+        $(listaAssuntos).append(listaAssunto);
+    }
+    // console.log(listaAssuntos);
+    $(modalContainer).append(listaAssuntos);
+    $('body').append(modalContainer);
+}
+
+function toggleInitialSortingModal(state) {
+    if (state.data) {
+        $('#aud-aid-initial-sorting-modal').show();
+        $('#aud-aid-initial-sorting-modal').removeClass('aud-aid-modal-shrinked');
+        $('#aud-aid-modal-overlay').show();
+    } else {
+        $('#aud-aid-initial-sorting-modal').addClass('aud-aid-modal-shrinked');
+        $('#aud-aid-initial-sorting-modal').hide();
+        $('#aud-aid-modal-overlay').hide();
+    }
+}
+
+/*request api
+https://pje.trt9.jus.br/pje-comum-api/api/processos/id/ID_DO_PROCESSO/assuntos
+request headers
+accept
+accept-encoding
+accept-language
+connection
+cookie
+host: pje.trt9.jus.br
+referer: https://pje.trt9.jus.br/pjekz/processo/ID_DO_PROCESSO/retificar
+TE
+User-Agent
+X-XSRF-TOKEN
+
+response:
+array = [{
+    id
+    idProcesso
+    assunto: {
+        id: id
+        idAssuntoSuperior: id
+        codigo: string
+        descricao: string
+        assuntoCompleto: string
+        assuntoResumido: string
+        nivel: integer
+        podeAdicionarAoProcesso: false (pois já foi adicionado ao processo)
+        possuiFilhos: bool
+    }
+    principal: bool
+}];
+*/

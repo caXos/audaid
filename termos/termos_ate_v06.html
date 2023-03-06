@@ -55,10 +55,7 @@
             visíveis após atualizar manualmente depois.</p>
 
         <h3>Trânsito de Dados</h3>
-        <p>Todas as informações manipuladas pela extensão <span style="color: red;">são as mesmas do PJe</span>.</p>
-        <p>Ou seja, as informações que o usuário recebe e envia em sua navegação normal pelo PJe são as mesmas que a
-            extensão utiliza.</p>
-        <p>Ao abrir a janela Dados do Processo, o navegador pede ao servidor informações como:</p>
+        <p>Ao abrir a janela Dados do Processo, a extensão busca as seguintes informações e as exibe na janela:</p>
         <ul>
             <li>Número do processo</li>
             <li>Fase do processo</li>
@@ -66,9 +63,6 @@
             <li>Salas de audiência da vara</li>
             <li>Tipos de audiência</li>
         </ul>
-        <p>A extensão faz a mesma coisa, busca as mesmas informações e as mostra na janela que é exibida quando se clica
-            no ícone localizado na parte superior central da tela.</p>
-        <h4>Função de Designar Audiência</h4>
         <p>Ao clicar no botão Designar, são enviadas as seguintes informações:</p>
         <ul>
             <li>Número do processo</li>
@@ -111,14 +105,13 @@
             </ul>
         </ul>
         <div style="flex-direction: row;">
-            <p>Ou seja, para a designação de audiências, <span style="color:red;"><b>NÃO</b></span> há trânsito, em
-                momento algum, das informações
+            <p>Ou seja, <span style="color:red;"><b>NÃO</b></span> há trânsito, em momento algum, das informações
                 abaixo:</p>
         </div>
         <!-- <ul style="background-color:#ea9999"> -->
         <ul style="color:red">
             <li>Informações pessoais (Nome, CPF, matrícula, etc.) do usuário logado</li>
-            <li>Informações funcionais (usuário e senha do PJe, senha do e-Token físico) do usuário logado</li>
+            <li>Informações funcionáis (usuário e senha do PJe, senha do e-Token físico) do usuário logado</li>
             <li>Informações pessoais (Nome, CPF, matrícula, etc.) das partes</li>
             <li>Informações pessoais (Nome, CPF, matrícula, etc.) dos advogados</li>
             <li>Informações pessoais (Nome, CPF, matrícula, etc.) de peritos</li>
@@ -126,81 +119,20 @@
             <li>Informações financeiras (valor atribuído à causa, valor da liquidação, valor da execução, etc)</li>
             <li>Informações sobre convênios (SISBAJUD, RENAJUD, DETRAN, etc)</li>
         </ul>
-
-        <h4>Gerenciamento da Pauta</h4>
-        <p>Ao clicar no ícone referente à pauta, será aberta uma nova aba. A diferença entre o conteúdo desta e a pauta
-            padrão do PJe é que a padrão é divida por sala de audiência, depois mês e, por fim, dia. Já a pauta da
-            extensão permite a visualização das pautas de todas as salas às quais o usuário tem acesso, mostrando os
-            meses em abas, todos os dias do mês, iniciando no dia corrente.</p>
-        <p>Neste momento, são requisitadas informações:</p>
-        <ul>
-            <li>Perfis do usuário logado (para que seja determinada quais salas estarão visíveis)</li>
-            <li>Listas dos processos em pauta</li>
-            <li>
-                <ul>
-                    <li>Números dos processos</li>
-                    <li>Nomes das partes</li>
-                    <li>Nomes dos advogados</li>
-                </ul>
-            </li>
-        </ul>
-        <p>Neste momento, as informações são apenas <span style="color: red;">requisitadas</span>, como se o usuário
-            estivessee abrindo a pauta do PJe de forma convencional.
-        <p>Nesta tela será possível, em versões futuras, designar audiências, cancelar audiências, registrar GIGS e
-            apagar GIGS.</p>
-        <p>Ao utilizar essas funções, as informações transitadas são, conforme acima indicado também:</p>
-        <ul>
-            <li>Número do processo</li>
-            <li>Fase do processo</li>
-            <li>Rito do processo</li>
-            <li>Salas de audiência da vara do perfil que o usuário está logado</li>
-            <li>Data</li>
-            <li>Hora</li>
-            <li>Tipo de audiência</li>
-            <li>GIGS para marcar (opcional)</li>
-            <li>Token X-SRF</li>
-        </ul>
-
-        <h4>Auxílio na Triagem Inicial</h4>
-        <p>Em versões futuras, será implementada janela para auxílio na triagem inicial.</p>
-        <p>Após preencher o check-list dos tópicos da triagem, caso o usuário clique no botão para certificar, uma nova
-            certidão padronizada será anexada ao processo, a depender se o processo está ok (triagem sem ocorrências) ou
-            não (triagem com ocorrências).</p>
-        <p>O conteúdo da certidão será sugerido ao usuário antes de ser anexada, e o usuário deverá confirmar para que
-            só então seja solicitada assinatura digital do usuário.</p>
-        <p>Para esta funcionalidade, os dados transitados serão:</p>
-        <ul>
-            <li>Número do processo</li>
-            <li>Conteúdo da certidão</li>
-        </ul>
-        <p>A extensão, por si, <span style="color: red;">não</span> solicita a assinatura digital, nem armazena qualquer
-            dado referente a esta ou à senha inserida pelo usuário.</p>
-        <p>A extensão vai "avisar" ao PJe que o usuário deseja inserir um documento, e o PJe vai pedir a autenticação,
-            como se o usuário estivesse usando a função de anexar da maneira convencional.</p>
-
-        <h3>Requisitos para usar a extensão</h3>
         <p>Para usar a extensão, é necessário concordar com os termos acima, clicando na caixa abaixo e, após, clicando
             no botão Concordar.</p>
-        <p>Ao fazer isso, você está afirmando que leu, entendeu, está ciente e concorda com os termos acima, não
+        <p></p>Ao fazer isso, você está afirmando que leu, entendeu, está ciente e concorda com os termos acima, não
         podendo responsabilizar o autor da extensão por qualquer informação supostamente vazada pela extensão.</p>
     </div>
     <div id="aud-aid-terms-footer" class="aud-aid-terms-footer">
         <div>
-            <button id='aud-aid-terms-agreement-button'>Continuar</button>
+            <p>Estes termos não estão mais em vigor, portanto não é possível concordar.</p>
+            <p>Acesse os termos atualizados clicando <span id="link-to-up-to-date-terms" class="link">aqui</span>.</p>
         </div>
     </div>
 
-    <!-- Alertas -->
-    <div id="aud-aid-alert-message" title="Termos e Condições">
-        <p>
-            <span class="ui-icon ui-icon-alert" style="float:left; margin:12px 12px 20px 0;"></span>
-            <!-- Ícone de fechar -->
-            Eu declaro que li e concordo
-        </p><!-- Texto principal do alerta -->
-    </div>
-
     <script type="text/javascript" src="./../jquery/core/jquery.js"></script>
-    <script type="text/javascript" src="termos.js"></script>
+    <script type="text/javascript" src="termos_ate_v06.js"></script>
     <script type="text/javascript" src="./../jquery/jquery-ui/jquery-ui.js"></script>
 </body>
 
