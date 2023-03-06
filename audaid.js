@@ -904,7 +904,7 @@ async function sendBookHearingPostRequest2(payload) {
         referrerPolicy: 'no-referrer-when-downgrade'
     }
 
-    fetch(urlParaAbrir)
+    await fetch(urlParaAbrir)
         // .then((response) => {
         //     response.json()
         // }).then((data) {
@@ -925,7 +925,7 @@ async function sendBookHearingPostRequest2(payload) {
                 openAudAidAlert('Erro!', JSON.stringify(responseJson.mensagem));
             }
         })
-        
+
     if (debugLevel >= 3) console.log("AudAid - XHR de Designar", novoxhr, new Date());
 }
 
