@@ -8,6 +8,9 @@ var debugLevel = null;
 var audAidAgreement = null;
 var tribunal = null;
 
+//Variáveis mais úteis para preparar expediente de comunicação
+var dataAudienciaDesignada = null
+
 /*
 Funções de utilidade geral
 */
@@ -41,7 +44,6 @@ async function gotAgreement(termos) {
         $('#aud-aid-modal-overlay').remove();
         $('#aud-aid-alert-container').remove();
 
-
         if (debugLevel >= 3) console.log("AudAid - Limpo!", new Date());
 
         if ((urlAtual.includes('processo')) && (urlAtual.includes('detalhe'))) {
@@ -63,6 +65,81 @@ async function gotAgreement(termos) {
             $(buttonContainer).append(bookHearingIcon);
             $('body').append(buttonContainer);
             if (debugLevel >= 3) console.log("AudAid - Botão criado e anexado à página! Pronto para uso!", new Date());
+        }
+        if ((urlAtual.includes('processo')) && (urlAtual.includes('comunicacoesprocessuais'))) {
+            let idSalaJulgadora = await getProcessData()
+            idSalaJulgadora = idSalaJulgadora.orgaoJulgador.id
+            if (debugLevel >= 3) console.log("AudAid - Estou na tela de Preparar Comunicação. Vou observar os destinatários.", new Date());
+            let audienciaDesignada = await fetch(getUrlToOpen('pje-comum-api/api/processos/id/'+idProcesso+'/audiencias'))
+            let dados = await audienciaDesignada.json()
+            if (dados.length > 0) {
+                //Já há audiência designada
+                dataAudienciaDesignada = dados[0].dataInicio
+            } else {
+                //Não há audiência designada
+            }
+            //Independentemente de haver audiência designada, cria um observador, que vai, ao fim, calcular a possível data de fechamento do expediente
+            var needToAlert = false
+            var botoes = document.querySelectorAll('button')
+            var botaoAssinar = botoes[botoes.length - 1]
+
+            var botaoSalvar = botoes[botoes.length - 2]
+            $(botaoSalvar).on('click', adicionaInformacaoPrazo)
+
+            // var buttonBeholder = new MutationObserver(async (mutations) => {
+            //     mutations.forEach(async (mutation) => {
+            //         if (mutation.attributeName === 'disabled') {
+            //             await adicionaInformacaoPrazo()
+            //         }
+            //     })
+            //     if (needToAlert) {
+            //         let texto = 'Pelo menos um expediente vai ter seu prazo fechado após a data da audiência. É possível continuar com a assinatura dos atos, mas é recomendável verificar se não é necessário alterar o prazo ou até mesmo despachar para adiar a audiência.'
+            //         alert(texto)
+            //         // Swal.fire({
+            //         //     text: texto,
+            //         //     icon: 'alert'
+            //         // })
+            //     }
+            // })
+
+            // buttonBeholder.observe(botaoAssinar, {
+            //     attributes: true
+            // })
+
+            async function adicionaInformacaoPrazo() {
+                var numberInputArray = document.querySelectorAll('input[type="number"]')
+                for (i=0; i< numberInputArray.length; i++) {
+                    //https://pje.trt9.jus.br/pje-gigs-api/api/atividade/retorna-prazo/37/49 sendo 37=> dias úteis e 49=> id do orgao julgador
+                    // let dataAudiencia = await fetch('https://pje.trt9.jus.br/pje-comum-api/api/processos/id/1468744/audiencias')
+                    // dataAudiencia = await dataAudiencia.json()
+                    var url = 'https://pje.trt9.jus.br/pje-gigs-api/api/atividade/retorna-prazo/'+(parseInt(numberInputArray[i].value)+2)+'/'+idSalaJulgadora
+                    let possivelDataFechamento = await fetch(url)
+                    possivelDataFechamento = await possivelDataFechamento.json()
+                    // if (Date.parse(possivelDataFechamento.DATA) >= Date.parse(dataAudiencia[0].dataInicio)) {
+                    if (Date.parse(possivelDataFechamento.DATA) >= Date.parse(dataAudienciaDesignada)) {
+                        needToAlert = true
+                        let parentNode = numberInputArray[i].parentNode
+                        let containerDiv = document.createElement('div')
+                        containerDiv.style.border = '1px solid red'
+                        containerDiv.style.borderRadius = '5px'
+                        containerDiv.style.textAlign= 'center'
+                        
+                        let spanTeste = document.createTextNode('O fim do prazo abaixo será no mesmo dia da ou posterior à data da audiência designada!')
+                        containerDiv.append(spanTeste)
+                        parentNode.prepend(containerDiv)
+                    }
+                }
+                if (needToAlert) {
+                    let texto = 'Pelo menos um expediente vai ter seu prazo fechado após a data da audiência. É possível continuar com a assinatura dos atos, mas é recomendável verificar se não é necessário alterar o prazo ou até mesmo despachar para adiar a audiência.'
+                    alert(texto)
+                    // Swal.fire({
+                    //     text: texto,
+                    //     icon: 'alert'
+                    // })
+                    needToAlert = false
+                }
+            }
+            
         }
     } else {
         console.log('pegou o termo (fufilled promise), mas seu valor é falso');
