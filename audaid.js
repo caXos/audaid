@@ -67,83 +67,73 @@ async function gotAgreement(termos) {
             if (debugLevel >= 3) console.log("AudAid - Botão criado e anexado à página! Pronto para uso!", new Date());
         }
         if ((urlAtual.includes('processo')) && (urlAtual.includes('comunicacoesprocessuais'))) {
-            let idSalaJulgadora = await getProcessData()
-            idSalaJulgadora = idSalaJulgadora.orgaoJulgador.id
-            if (debugLevel >= 3) console.log("AudAid - Estou na tela de Preparar Comunicação. Vou observar os destinatários.", new Date());
-            let audienciaDesignada = await fetch(getUrlToOpen('pje-comum-api/api/processos/id/'+idProcesso+'/audiencias'))
-            let dados = await audienciaDesignada.json()
-            if (dados.length > 0) {
-                //Já há audiência designada
-                dataAudienciaDesignada = dados[0].dataInicio
-            } else {
-                //Não há audiência designada
-            }
-            //Independentemente de haver audiência designada, cria um observador, que vai, ao fim, calcular a possível data de fechamento do expediente
-            var needToAlert = false
-            var botoes = document.querySelectorAll('button')
-            var botaoAssinar = botoes[botoes.length - 1]
-
-            var botaoSalvar = botoes[botoes.length - 2]
-            $(botaoSalvar).on('click', adicionaInformacaoPrazo)
-
-            // var buttonBeholder = new MutationObserver(async (mutations) => {
-            //     mutations.forEach(async (mutation) => {
-            //         if (mutation.attributeName === 'disabled') {
-            //             await adicionaInformacaoPrazo()
-            //         }
-            //     })
-            //     if (needToAlert) {
-            //         let texto = 'Pelo menos um expediente vai ter seu prazo fechado após a data da audiência. É possível continuar com a assinatura dos atos, mas é recomendável verificar se não é necessário alterar o prazo ou até mesmo despachar para adiar a audiência.'
-            //         alert(texto)
-            //         // Swal.fire({
-            //         //     text: texto,
-            //         //     icon: 'alert'
-            //         // })
-            //     }
-            // })
-
-            // buttonBeholder.observe(botaoAssinar, {
-            //     attributes: true
-            // })
-
-            async function adicionaInformacaoPrazo() {
-                var numberInputArray = document.querySelectorAll('input[type="number"]')
-                for (i=0; i< numberInputArray.length; i++) {
-                    //https://pje.trt9.jus.br/pje-gigs-api/api/atividade/retorna-prazo/37/49 sendo 37=> dias úteis e 49=> id do orgao julgador
-                    // let dataAudiencia = await fetch('https://pje.trt9.jus.br/pje-comum-api/api/processos/id/1468744/audiencias')
-                    // dataAudiencia = await dataAudiencia.json()
-                    var url = 'https://pje.trt9.jus.br/pje-gigs-api/api/atividade/retorna-prazo/'+(parseInt(numberInputArray[i].value)+2)+'/'+idSalaJulgadora
-                    let possivelDataFechamento = await fetch(url)
-                    possivelDataFechamento = await possivelDataFechamento.json()
-                    // if (Date.parse(possivelDataFechamento.DATA) >= Date.parse(dataAudiencia[0].dataInicio)) {
-                    if (Date.parse(possivelDataFechamento.DATA) >= Date.parse(dataAudienciaDesignada)) {
-                        needToAlert = true
-                        let parentNode = numberInputArray[i].parentNode
-                        let containerDiv = document.createElement('div')
-                        containerDiv.style.border = '1px solid red'
-                        containerDiv.style.borderRadius = '5px'
-                        containerDiv.style.textAlign= 'center'
-                        
-                        let spanTeste = document.createTextNode('O fim do prazo abaixo será no mesmo dia da ou posterior à data da audiência designada!')
-                        containerDiv.append(spanTeste)
-                        parentNode.prepend(containerDiv)
-                    }
-                }
-                if (needToAlert) {
-                    let texto = 'Pelo menos um expediente vai ter seu prazo fechado após a data da audiência. É possível continuar com a assinatura dos atos, mas é recomendável verificar se não é necessário alterar o prazo ou até mesmo despachar para adiar a audiência.'
-                    alert(texto)
-                    // Swal.fire({
-                    //     text: texto,
-                    //     icon: 'alert'
-                    // })
-                    needToAlert = false
-                }
-            }
-            
+            communicationScreenWarnings()
         }
     } else {
         console.log('pegou o termo (fufilled promise), mas seu valor é falso');
     }
+}
+
+async function communicationScreenWarnings() {
+    if (debugLevel >= 3) console.log("AudAid - Estou na tela de Preparar Comunicação. Vou observar os destinatários.", new Date());
+    //Pega os dados do processo, para poder pegar o ID da Sala
+    let idSalaJulgadora = await getProcessData()
+    idSalaJulgadora = idSalaJulgadora.orgaoJulgador.id
+    //Verifica se tem audiência
+    let audienciaDesignada = await fetch(getUrlToOpen('pje-comum-api/api/processos/id/'+idProcesso+'/audiencias'))
+    let dados = await audienciaDesignada.json()
+    if (dados.length > 0) {
+        //Já há audiência designada
+        dataAudienciaDesignada = dados[0].dataInicio
+        console.log(dataAudienciaDesignada)
+        let dataAudienciaFormatada = dataAudienciaDesignada.substring(0,10)
+        console.log(dataAudienciaFormatada)
+        //Coloca texto no último fieldset da tela
+        let fieldsets = document.querySelectorAll('fieldset')
+        //Coloca o estilo do último fieldset como relative, para poder receber um child com position absolute
+        fieldsets[fieldsets.length - 1].style.position = 'relative'
+        //Prepara o container da mensagem
+        let messageContainer = document.createElement('div')
+        messageContainer.style.position = 'absolute'
+        messageContainer.style.top = '-25px'
+        messageContainer.style.right = '5px'
+        messageContainer.style.border = '2px dotted red'
+        messageContainer.style.borderRadius = '5px'
+        messageContainer.style.backgroundColor = 'white'
+        messageContainer.style.padding = '2px'
+        messageContainer.style.fontSize = '12px'
+        messageContainer.style.cursor = 'pointer'
+        $(messageContainer).on('click', function () {
+            Swal.fire({
+                icon: 'info',
+                html: `O prazo é contado descontando-se 2 dias, sendo 1 por conta do prazo para publicar no DEJT e 1 por ser o dia da ciência ("Dia do susto não conta").
+                <br>
+                Exemplo:
+                <br>
+                Data da criação da intimação: 10/02/20XX <br>
+                Data publicação no DEJT: 11/02/20XX <br>
+                Data da ciência: 12/02/20XX <br>
+                Início da contagem do prazo: 13/02/20XX`
+            })
+        })
+        //Calcula quantos dias úteis até o dia da audiência
+        let diasUteisAteDataAudiencia = await fetch(getUrlToOpen('pje-gigs-api/api/atividade/retorna-dias/'+dataAudienciaFormatada+'/'+idSalaJulgadora))
+        diasUteisAteDataAudiencia = await diasUteisAteDataAudiencia.json()
+        diasUteisAteDataAudiencia = diasUteisAteDataAudiencia.DIAS
+        //Desconta 2 dias (1 para publicar no DEJT e outro como sendo da ciência)
+        if (diasUteisAteDataAudiencia - 2 < 0) diasUteisAteDataAudiencia = 0
+        else diasUteisAteDataAudiencia -= 2
+        //Prepara a mensagem e coloca ela no container
+        let messageTemplate = `Data da audiência: <span style='background-color: yellow;'>${new Date(dataAudienciaDesignada).toLocaleDateString()}</span> - Expedientes com prazo igual ou superior a <span style='background-color: yellow;'>${diasUteisAteDataAudiencia}</span> podem ter vencimento no dia da audiência ou posterior.`
+        //messageContainer.textContent = messageTemplate
+        messageContainer.innerHTML = messageTemplate
+        //Coloca o container como filho do ultimo fieldset
+        fieldsets[fieldsets.length - 1].appendChild(messageContainer)
+    } else {
+        //Não há audiência designada
+    }
+    //Independentemente de haver audiência designada, cria um observador, que vai, ao fim, calcular a possível data de fechamento do expediente
+    
 }
 
 async function didNotGetAgreement(error) {

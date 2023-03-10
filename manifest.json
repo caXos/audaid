@@ -93,7 +93,8 @@
                 "optionsPopup/optionsPopup.js",
                 "termos/termos.js",
                 "termos/termos_ate_v06.js",
-                "history/history.js"
+                "history/history.js",
+                "Swal2/swal.js"
             ],
             "css": [
                 "audaid.css",
