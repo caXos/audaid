@@ -10,6 +10,7 @@ var tribunal = null;
 
 //Variáveis mais úteis para preparar expediente de comunicação
 var dataAudienciaDesignada = null
+var idSalaJulgadora = null
 
 /*
 Funções de utilidade geral
@@ -77,7 +78,7 @@ async function gotAgreement(termos) {
 async function communicationScreenWarnings() {
     if (debugLevel >= 3) console.log("AudAid - Estou na tela de Preparar Comunicação. Vou observar os destinatários.", new Date());
     //Pega os dados do processo, para poder pegar o ID da Sala
-    let idSalaJulgadora = await getProcessData()
+    idSalaJulgadora = await getProcessData()
     idSalaJulgadora = idSalaJulgadora.orgaoJulgador.id
     //Verifica se tem audiência
     let audienciaDesignada = await fetch(getUrlToOpen('pje-comum-api/api/processos/id/'+idProcesso+'/audiencias'))
@@ -117,14 +118,14 @@ async function communicationScreenWarnings() {
             })
         })
         //Calcula quantos dias úteis até o dia da audiência
-        let diasUteisAteDataAudiencia = await fetch(getUrlToOpen('pje-gigs-api/api/atividade/retorna-dias/'+dataAudienciaFormatada+'/'+idSalaJulgadora))
+        var diasUteisAteDataAudiencia = await fetch(getUrlToOpen('pje-gigs-api/api/atividade/retorna-dias/'+dataAudienciaFormatada+'/'+idSalaJulgadora))
         diasUteisAteDataAudiencia = await diasUteisAteDataAudiencia.json()
         diasUteisAteDataAudiencia = diasUteisAteDataAudiencia.DIAS
         //Desconta 2 dias (1 para publicar no DEJT e outro como sendo da ciência)
         if (diasUteisAteDataAudiencia - 2 < 0) diasUteisAteDataAudiencia = 0
         else diasUteisAteDataAudiencia -= 2
         //Prepara a mensagem e coloca ela no container
-        let messageTemplate = `Data da audiência: <span style='background-color: yellow;'>${new Date(dataAudienciaDesignada).toLocaleDateString()}</span> - Expedientes com prazo igual ou superior a <span style='background-color: yellow;'>${diasUteisAteDataAudiencia}</span> podem ter vencimento no dia da audiência ou posterior.`
+        let messageTemplate = `Data da audiência: <span style='background-color: yellow;'>${new Date(dataAudienciaDesignada).toLocaleDateString()}</span> - Expedientes com prazo igual ou superior a <span style='background-color: yellow;'>${diasUteisAteDataAudiencia+1}</span> dias úteis podem ter vencimento no dia da audiência ou posterior.`
         //messageContainer.textContent = messageTemplate
         messageContainer.innerHTML = messageTemplate
         //Coloca o container como filho do ultimo fieldset
@@ -133,7 +134,56 @@ async function communicationScreenWarnings() {
         //Não há audiência designada
     }
     //Independentemente de haver audiência designada, cria um observador, que vai, ao fim, calcular a possível data de fechamento do expediente
-    
+    setInterval(async function () {
+        console.log('eizem')
+        let numberInputs = document.querySelectorAll('input[type="number"]')
+        numberInputs.forEach(async (inputAtual) => {
+            $(inputAtual).off('change', constroiContainerDataProvavelFechamento).on('change', constroiContainerDataProvavelFechamento).trigger('change')
+        })
+    }, 1000)
+}
+
+async function constroiContainerDataProvavelFechamento(evt) {
+    $(evt.target).next().remove()
+
+    let dataPrevistaFechamentoTextContainer = document.createElement('div')
+    // dataPrevistaFechamentoTextContainer.style.position = 'absolute'
+    // dataPrevistaFechamentoTextContainer.style.top = '-25px'
+    // dataPrevistaFechamentoTextContainer.style.right = '5px'
+    dataPrevistaFechamentoTextContainer.style.border = '2px dotted blue'
+    dataPrevistaFechamentoTextContainer.style.borderRadius = '5px'
+    dataPrevistaFechamentoTextContainer.style.backgroundColor = 'white'
+    dataPrevistaFechamentoTextContainer.style.padding = '2px'
+    dataPrevistaFechamentoTextContainer.style.fontSize = '12px'
+    dataPrevistaFechamentoTextContainer.style.cursor = 'pointer'
+    $(dataPrevistaFechamentoTextContainer).on('click', function () {
+        Swal.fire({
+            icon: 'info',
+            html: `O prazo é contado acrescentando-se 2 dias, sendo 1 por conta do prazo para publicar no DEJT e 1 por ser o dia da ciência ("Dia do susto não conta").
+            <br>
+            Exemplo:
+            <br>
+            Data da criação da intimação: 10/02/20XX <br>
+            Data publicação no DEJT: 11/02/20XX <br>
+            Data da ciência: 12/02/20XX <br>
+            Início da contagem do prazo: 13/02/20XX`
+        })
+    })
+    let texto = ``
+    let diasParaFecharExpediente = evt.target.valueAsNumber + 2
+    let diasParaFecharExpedienteFormatado = await fetch(getUrlToOpen('pje-gigs-api/api/atividade/retorna-prazo/'+diasParaFecharExpediente+'/'+idSalaJulgadora))
+    diasParaFecharExpedienteFormatado = await diasParaFecharExpedienteFormatado.json()
+    diasParaFecharExpedienteFormatado = diasParaFecharExpedienteFormatado.DATA
+    texto = `Data prevista para fechar o prazo: <span style='background-color: cyan;'>${new Date(diasParaFecharExpedienteFormatado.substring(0,10)).toLocaleDateString()}</span>`
+    let dataAudienciaParsed = Date.parse(dataAudienciaDesignada)
+    let dataPrevistaFechamentoExpedienteParsed = Date.parse(diasParaFecharExpedienteFormatado)
+    console.log(dataPrevistaFechamentoExpedienteParsed, dataAudienciaParsed)
+    if (dataPrevistaFechamentoExpedienteParsed >= dataAudienciaParsed) {
+        texto += `<br>
+        <span style='color: red;'>Este expediente terá seu prazo fechado no dia da audiência ou posterior. <br> Verifique antes de continuar</span>`
+    }
+    dataPrevistaFechamentoTextContainer.innerHTML = texto
+    $(dataPrevistaFechamentoTextContainer).insertAfter(evt.target)
 }
 
 async function didNotGetAgreement(error) {
