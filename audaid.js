@@ -127,7 +127,7 @@ async function communicationScreenWarnings() {
         //Prepara a mensagem e coloca ela no container
         let messageTemplate = `Data da audiência: <span style='background-color: yellow;'>${new Date(dataAudienciaDesignada).toLocaleDateString()}</span> - Expedientes com prazo igual ou superior a <span style='background-color: yellow;'>${diasUteisAteDataAudiencia+1}</span> dias úteis podem ter vencimento no dia da audiência ou posterior.`
         //messageContainer.textContent = messageTemplate
-        messageContainer.innerHTML = messageTemplate
+        messageContainer.text = messageTemplate
         //Coloca o container como filho do ultimo fieldset
         fieldsets[fieldsets.length - 1].appendChild(messageContainer)
     } else {
@@ -182,7 +182,7 @@ async function constroiContainerDataProvavelFechamento(evt) {
         texto += `<br>
         <span style='color: red;'>Este expediente terá seu prazo fechado no dia da audiência ou posterior. <br> Verifique antes de continuar</span>`
     }
-    dataPrevistaFechamentoTextContainer.innerHTML = texto
+    dataPrevistaFechamentoTextContainer.innerHTML = DOMPurify.sanitize(texto)
     $(dataPrevistaFechamentoTextContainer).insertAfter(evt.target)
 }
 
