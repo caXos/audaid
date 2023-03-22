@@ -86,9 +86,9 @@ async function communicationScreenWarnings() {
     if (dados.length > 0) {
         //Já há audiência designada
         dataAudienciaDesignada = dados[0].dataInicio
-        console.log(dataAudienciaDesignada)
+        // console.log(dataAudienciaDesignada)
         let dataAudienciaFormatada = dataAudienciaDesignada.substring(0,10)
-        console.log(dataAudienciaFormatada)
+        // console.log(dataAudienciaFormatada)
         //Coloca texto no último fieldset da tela
         let fieldsets = document.querySelectorAll('fieldset')
         //Coloca o estilo do último fieldset como relative, para poder receber um child com position absolute
@@ -135,7 +135,7 @@ async function communicationScreenWarnings() {
     }
     //Independentemente de haver audiência designada, cria um observador, que vai, ao fim, calcular a possível data de fechamento do expediente
     setInterval(async function () {
-        console.log('eizem')
+        // console.log('eizem')
         let numberInputs = document.querySelectorAll('input[type="number"]')
         numberInputs.forEach(async (inputAtual) => {
             $(inputAtual).off('change', constroiContainerDataProvavelFechamento).on('change', constroiContainerDataProvavelFechamento).trigger('change')
@@ -177,7 +177,7 @@ async function constroiContainerDataProvavelFechamento(evt) {
     texto = `Data prevista para fechar o prazo: <span style='background-color: cyan;'>${new Date(diasParaFecharExpedienteFormatado.substring(0,10)).toLocaleDateString()}</span>`
     let dataAudienciaParsed = Date.parse(dataAudienciaDesignada)
     let dataPrevistaFechamentoExpedienteParsed = Date.parse(diasParaFecharExpedienteFormatado)
-    console.log(dataPrevistaFechamentoExpedienteParsed, dataAudienciaParsed)
+    // console.log(dataPrevistaFechamentoExpedienteParsed, dataAudienciaParsed)
     if (dataPrevistaFechamentoExpedienteParsed >= dataAudienciaParsed) {
         texto += `<br>
         <span style='color: red;'>Este expediente terá seu prazo fechado no dia da audiência ou posterior. <br> Verifique antes de continuar</span>`
