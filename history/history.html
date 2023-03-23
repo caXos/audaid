@@ -130,6 +130,36 @@
 				<li>Nenhuma alteração em relação a versão anterior.</li>
 			</ol>
 		</div>
+		<div>
+			<h3>Data: 13/03/2023</h3>
+			<p>Versão: 2.0</p>
+			<p>AudAid e AudHelper</p>
+			<ol>
+				<li>O AudAid foi bloqueado nos computadores do TRT9. Houve, então, uma pausa no desenvolvimento, pois tive de protocolar avaliação para homologação do uso. Como não era sabido, pensei qeu fosse filtrado pelo nome da extensão ou do arquivo. Tentei, portanto, upar o mesmo código, apenas com nome diferente, AudHelper, mas não deu certo.</li>
+				<li>Inclusão do Swal2</li>
+				<li>Nova funcionalidade: Calculadora de Prazo durante a elaboração de expedientes de comunicação.</li>
+				<ol>
+					<li>Ao criar um expediente, ao mudar o prazo do expediente, é exibida, abaixo do prazo, um quadro com bordas azuis indicando a possível data de fechamento do expediente.</li>
+					<li>Caso haja alguma audiência designada, é exibida, na parte superior direita do quadro dos expedientes, um quadro com bordas vermelhas indicado a data da audiência e quantos dias úteis há até a audiência</li>
+				</ol>
+			</ol>
+			<p>Bugs conhecidos e desvantagens:</p>
+			<ol>
+				<li>Na nova funcionalidade de cáclulo do prazo, é necessário mudar o prazo padrão para que a primeira consulta seja feita, pois o evento é onChange</li>
+			</ol>
+		</div>
+		<div>
+			<h3>Data: 23/03/2023</h3>
+			<p>Versão: 2.2</p>
+			<p>Bugfix</p>
+			<ol>
+				<li>Na calculadora de prazo de expediente, a caixa azul ficava sumindo e aparecendo, o que era ruim. Rertirado o .trigger('change') dos selects</li>
+			</ol>
+			<p>Bugs conhecidos e desvantagens:</p>
+			<ol>
+				<li>Nenhuma alteração em relação a versão anterior.</li>
+			</ol>
+		</div>
 	</div>
 	<script type="text/javascript" src="./../jquery/core/jquery.js"></script>
 	<script type="text/javascript" src="./history.js"></script>

@@ -11,8 +11,9 @@
 <body>
 	<div id="aud-aid-options-header">
 		<h1>AudAid - Opções</h1>
-		<h3>Versão: 0.7</h3>
+		<h3>Versão: 2.2</h3>
 	</div>
+
 	<div id="aud-aid-options-content">
 		<label for="aud-aid-debug-level-select">Nível de Debug</label>
 		<select id="aud-aid-debug-level-select">
@@ -21,14 +22,24 @@
 			<option value=2>2 -> avisos e erros</option>
 			<option value=3>3 -> full debug (ao início, meio e fim de cada função)</option>
 		</select>
+		
 		<label>Aqui vão os Gigs, futuramente</label>
+
+		<label for="aud-aid-default-hearing-room-select">Sala de Audiência Padrão</label>
+		<select id="aud-aid-default-hearing-room-select">
+			<option value=0 selected disabled>Selecione uma sala</option>
+		</select>
+
 	</div>
+
 	<div id="aud-aid-alert-container">
 		<p>Opções gravadas com sucesso</p>
 	</div>
 	<script type="text/javascript" src="./../jquery/core/jquery.js"></script>
 	<script type="text/javascript" src="./options.js"></script>
 	<script type="text/javascript" src="./../jquery/jquery-ui/jquery-ui.js"></script>
+	<script type="text/javascript" src="./../Swal2/swal.js"></script>
+	<script type="text/javascript" src="./../DOMPurify/purify.min.js"></script>
 </body>
 
 </html>

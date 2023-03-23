@@ -84,8 +84,13 @@ async function communicationScreenWarnings() {
     let audienciaDesignada = await fetch(getUrlToOpen('pje-comum-api/api/processos/id/'+idProcesso+'/audiencias'))
     let dados = await audienciaDesignada.json()
     if (dados.length > 0) {
+        // console.log(dados)
+        let iterator;
+        for (iterator = dados.length-1; iterator >= 0; iterator--) {
+            if (dados[iterator].status === "Designada") break
+        }
         //Já há audiência designada
-        dataAudienciaDesignada = dados[0].dataInicio
+        dataAudienciaDesignada = dados[iterator].dataInicio
         // console.log(dataAudienciaDesignada)
         let dataAudienciaFormatada = dataAudienciaDesignada.substring(0,10)
         // console.log(dataAudienciaFormatada)
@@ -127,7 +132,7 @@ async function communicationScreenWarnings() {
         //Prepara a mensagem e coloca ela no container
         let messageTemplate = `Data da audiência: <span style='background-color: yellow;'>${new Date(dataAudienciaDesignada).toLocaleDateString()}</span> - Expedientes com prazo igual ou superior a <span style='background-color: yellow;'>${diasUteisAteDataAudiencia+1}</span> dias úteis podem ter vencimento no dia da audiência ou posterior.`
         //messageContainer.textContent = messageTemplate
-        messageContainer.text = messageTemplate
+        messageContainer.innerHTML = DOMPurify.sanitize(messageTemplate)
         //Coloca o container como filho do ultimo fieldset
         fieldsets[fieldsets.length - 1].appendChild(messageContainer)
     } else {
@@ -138,7 +143,8 @@ async function communicationScreenWarnings() {
         // console.log('eizem')
         let numberInputs = document.querySelectorAll('input[type="number"]')
         numberInputs.forEach(async (inputAtual) => {
-            $(inputAtual).off('change', constroiContainerDataProvavelFechamento).on('change', constroiContainerDataProvavelFechamento).trigger('change')
+            // console.log($(inputAtual).data('events'))
+            $(inputAtual).off('change', constroiContainerDataProvavelFechamento).on('change', constroiContainerDataProvavelFechamento)//.trigger('change')
         })
     }, 1000)
 }

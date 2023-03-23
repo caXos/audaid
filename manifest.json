@@ -1,8 +1,8 @@
 {
     "manifest_version": 2,
-    "name": "AudHelper",
-    "version": "2.1",
-    "description": "Substituto do AudAid - Auxiliar no processo de de designação de audiências no PJeKz",
+    "name": "AudAid",
+    "version": "2.2",
+    "description": "AudAid - Auxiliar no processo de de designação de audiências no PJeKz",
     "author": "Jorge Henrique Bueno Gomez - Técnico Judiciário - matrícula 82427 - 1ª Vara do Trabalho de Cascavel - Tribunal Regional do Trabalho do Paraná (TRT 9ª Região)",
     "icons": {
         "16": "icons/audaid.svg",
