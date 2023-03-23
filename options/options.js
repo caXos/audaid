@@ -105,10 +105,10 @@ function buildDefaultHearingRoomSelectOptions(roomsArray) {
 
     for (profileIterator = 0; profileIterator < perfisDoUsuario.length; profileIterator++) {
         let option = $('<option />').attr('value',0).attr('disabled','disabled').text(perfisDoUsuario[profileIterator].orgaoJulgador)
-        $(defaultRoomSelect).append(option)
+        $(defaultRoomSelect).append( DOMPurify.sanitize(option) )
         for (roomIterator = 0; roomIterator < roomsArray[profileIterator].length; roomIterator++) {
             let option = $('<option />').attr('value',roomsArray[profileIterator][roomIterator].id).text(roomsArray[profileIterator][roomIterator].nome)
-            $(defaultRoomSelect).append(option)
+            $(defaultRoomSelect).append( DOMPurify.sanitize(option) )
         }
     }
 }
